@@ -52,8 +52,8 @@ HIAC=[3316500,20275000,28279000,41711000,43479000,54461000]
 global HILAB
 HILAB=[9752.7,54413,70593,102010,88518,109640]
 AFF=[[0.077776,0.078353,0.080316,0.081924,0.084594,0.08889,0.077776,0.078353,0.080316,0.081924],[0.093363,0.093682,0.094493,0.09595,0.098532,0.10169,0.093363,0.093682,0.094493,0.09595],[0.10873,0.108895,0.109211,0.110592,0.113178,0.115791,0.10873,0.108895,0.109211,0.110592],[0.118943,0.119016,0.119091,0.120322,0.122793,0.124753,0.118943,0.119016,0.119091,0.120322],[0.123089,0.123074,0.122948,0.123891,0.126394,0.126694,0.123089,0.123074,0.122948,0.123891],[0.120939,0.120839,0.120487,0.120782,0.122085,0.120845,0.120939,0.120839,0.120487,0.120782]]
-global f
-f=[]
+global p
+p=[]
 i=0
 while i<=5:
     j=0
@@ -79,23 +79,23 @@ while i<=5:
     while l<=5:
         d=str(i+1)+str(l+1)
         if l==0:
-            f.append(d+str(3))
+            p.append(d+str(3))
             g=HTcomp.HSlab("hslab"+d,"pipe"+d,"pipe",[fun1],"snode"+d,"hflux",0.0,FALAB[i],nlayers=3)
             g.add_layer(3.81E-4,0.0203,2,FALABI[i],'SS23','User')
             g.add_layer(1.4E-4,0.0203,2,GIFALAB[i],'gap23','User')
-            f[i*3+l]=g.add_layer(0.0024,0.0203,2,GIFALAB[i],'MOX23','User',heat_input=HILAB[i])
+            p[i*3+l]=g.add_layer(0.0024,0.0203,2,GIFALAB[i],'MOX23','User',heat_input=HILAB[i])
         elif l==1:
-            f.append(d+str(3))
+            p.append(d+str(3))
             g=HTcomp.HSlab("hslab"+d,"pipe"+d,"pipe",[fun1],"snode"+d,"hflux",0.0,FAAC[i],nlayers=3)
             g.add_layer(3.81E-4,0.9144,2,FAACI[i],'SS23','User')
             g.add_layer(7.E-5,0.9144,2,GIFAAC[i],'gap23','User')
-            f[i*3+l]=g.add_layer(0.00247,0.9144,2,GIFAAC[i],'MOX23','User',10,heat_input=HIAC[i],AFF=AFF[i])
+            p[i*3+l]=g.add_layer(0.00247,0.9144,2,GIFAAC[i],'MOX23','User',10,heat_input=HIAC[i],AFF=AFF[i])
         elif l==2:
-            f.append(d+str(3))
+            p.append(d+str(3))
             g=HTcomp.HSlab("hslab"+d,"pipe"+d,"pipe",[fun1],"snode"+d,"hflux",0.0,FAUAB[i],nlayers=3)
             g.add_layer(3.81E-4,0.0203,2,FAUABI[i],'SS23','User')
             g.add_layer(1.4E-4,0.0203,2,GIFAUAB[i],'gap23','User')
-            f[i*3+l]=g.add_layer(0.0024,0.0203,2,GIFAUAB[i],'MOX23','User',heat_input=HIUAB[i])
+            p[i*3+l]=g.add_layer(0.0024,0.0203,2,GIFAUAB[i],'MOX23','User',heat_input=HIUAB[i])
         elif l==3:
             g=HTcomp.HSlab("hslab"+d,"pipe"+d,"pipe",[fun1],"snode"+d,"hflux",0.0,FAUN1[i],nlayers=1)
             g.add_layer(0.0018497,0.1448,2,FAUN1[i],'SS23','User')
@@ -109,6 +109,7 @@ while i<=5:
     i+=1
 global pipe7
 pipe7=circuit1.add_pipe("pipe7",0.003238,2.4722,"node1","node7",0.03,1,1,cfarea=0.12982,Kforward=147.6114,heat_input=7113740.)
+
 global series1
 series1=csv_reader("power.csv")
 def power_trans(time,delt):
@@ -117,11 +118,11 @@ def power_trans(time,delt):
         n=0
         while n<=2:
             if n==0:
-                f[m*3+n].heat_input = series1(time)*HILAB[m]
+                p[m*3+n].heat_input = series1(time)*HILAB[m]
             elif n==1:
-                f[m*3+n].heat_input = series1(time)*HIAC[m]
+                p[m*3+n].heat_input = series1(time)*HIAC[m]
             else:
-                f[m*3+n].heat_input = series1(time)*HIUAB[m]
+                p[m*3+n].heat_input = series1(time)*HIUAB[m]
             n+=1
         m+=1
     pipe7.heat_input = series1(time) * 7113740.
@@ -141,4 +142,92 @@ from PINET import scheduler
 scheduler.delt = 1.
 scheduler.etime = 900    
 
+from rpdat import *
 
+# reading components
+from PINET.project import get_comp
+# radial zone1
+DHSNZ1LAB = get_comp("hslab11")
+DHSNZ1AC  = get_comp("hslab12")
+DHSNZ1UAB = get_comp("hslab13")
+PipeNZ1LAB = get_comp("pipe11")
+PipeNZ1AC  = get_comp("pipe12")
+PipeNZ1UAB = get_comp("pipe13")
+
+DHSNZ2LAB = get_comp("hslab21")
+DHSNZ2AC  = get_comp("hslab22")
+DHSNZ2UAB = get_comp("hslab23")
+PipeNZ2LAB = get_comp("pipe21")
+PipeNZ2AC  = get_comp("pipe22")
+PipeNZ2UAB = get_comp("pipe23")
+DHSNZ3LAB = get_comp("hslab31")
+DHSNZ3AC  = get_comp("hslab32")
+DHSNZ3UAB = get_comp("hslab33")
+PipeNZ3LAB = get_comp("pipe31")
+PipeNZ3AC  = get_comp("pipe32")
+PipeNZ3UAB = get_comp("pipe33")
+DHSNZ4LAB = get_comp("hslab41")
+DHSNZ4AC  = get_comp("hslab42")
+DHSNZ4UAB = get_comp("hslab43")
+PipeNZ4LAB = get_comp("pipe41")
+PipeNZ4AC  = get_comp("pipe42")
+PipeNZ4UAB = get_comp("pipe43")
+DHSNZ5LAB = get_comp("hslab51")
+DHSNZ5AC  = get_comp("hslab52")
+DHSNZ5UAB = get_comp("hslab53")
+PipeNZ5LAB = get_comp("pipe51")
+PipeNZ5AC  = get_comp("pipe52")
+PipeNZ5UAB = get_comp("pipe53")
+DHSNZ6LAB = get_comp("hslab61")
+DHSNZ6AC  = get_comp("hslab62")
+DHSNZ6UAB = get_comp("hslab63")
+PipeNZ6LAB = get_comp("pipe61")
+PipeNZ6AC  = get_comp("pipe62")
+PipeNZ6UAB = get_comp("pipe63")
+
+
+# calculate TRFL, TRCL, TRNA, TRDOP
+TRFL  = 0.0
+TRCL  = 0.0
+TRNA  = 0.0
+TRDOP = 0.0
+
+# 1ST ZONE
+RFL  = 0.0
+RCL  = 0.0
+RNA  = 0.0
+RDOP = 0.0
+
+# for (K=1;K<=10;K++) { #pending automate
+# # fuel region 
+ # TNAAC = PipeNZ1AC.GetPropertyFromFullDisplayName("Downstream node, Increment "+K+".{Flow Node Results}Total temperature")
+ # RNA = RNA + TC3AC1[K-1]*(TNAAC-TOREF);
+
+ # IPS.Properties.Double TDA3 = DHSNZ1AC.GetPropertyFromFullDisplayName("Upstream node, HT element direction 2, Cross direction "+K+".{Solid Node Results}Temperature") as IPS.Properties.Double;
+ # IPS.Properties.Double TDA4 = DHSNZ1AC.GetPropertyFromFullDisplayName("Sub-element, HT element direction 2, Cross direction "+K+".{Generic}Temperature") as IPS.Properties.Double;
+  # TDA6=0.5*(TDA3+TDA4);
+  # QDNA=TDA6/TOREF;
+  # if (TDA6<=1000.0 && TDA6 > 473.0) { //pending automate
+      # RDOP = RDOP + TCDAC1[K-1]*Math.Log(QDNA);
+  # }
+  # else if (TDA6 > 1000.0 && TDA6 <= 2000.0){
+      # RDOP = RDOP + TCD2AC1[K-1]*Math.Log(QDNA);
+  # }
+  # else {
+      # IPS.Task.ConsoleSolverOutputProvider.GetConsoleOutputWindow().AddTextLine("warning: Doppler out of range. Time = " + Time);
+      # return;
+  # }
+  
+
+ # IPS.Properties.Double TAC1 = DHSNZ1AC.GetPropertyFromFullDisplayName("Upstream node, HT element direction 5, Cross direction "+K+".{Solid Node Results}Temperature") as IPS.Properties.Double;
+ # IPS.Properties.Double TAC2 = DHSNZ1AC.GetPropertyFromFullDisplayName("Sub-element, HT element direction 5, Cross direction "+K+".{Generic}Temperature") as IPS.Properties.Double;
+ # TAC=0.5*(TAC1+TAC2);
+ # RCL = RCL + TC2AC1[K-1]*(TAC-TOREF);
+
+    # // if (IFR==1) { //fuel stuck to clad
+        # // RFL = RFL + TC1AC1[K-1]*(TAC-TOREF);
+    # // }
+    # // else if (IFR==0) { //fuel free to expand
+    # RFL = RFL + TC1AC1[K-1]*(TDA6-TOREF);
+    # // }
+# }
