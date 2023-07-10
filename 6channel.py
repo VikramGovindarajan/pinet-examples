@@ -204,7 +204,7 @@ def pk1(time,delt):
     TRDOP = 0.0
 
     NZNR = 6 #no. of radial neutronic zones
-    for J in range(NZNR):
+    for I in range(NZNR):
         RFL  = 0.0
         RCL  = 0.0
         RNA  = 0.0
@@ -212,91 +212,127 @@ def pk1(time,delt):
 
         for K in range(10): #pending automate
             # fuel region 
-            TNAAC = PipeNZAC[J].faces[K].dnode.ttemp_gues
-            RNA = RNA + TC3AC[J][K-1]*(TNAAC-TOREF)
+            TNAAC = PipeNZAC[I].faces[K].dnode.ttemp_gues
+            RNA = RNA + TC3AC[I][K-1]*(TNAAC-TOREF)
             
-            TDA3 = DHSNZAC[J].layers[0].nodes[10+K].temp_gues
-            TDA4 = DHSNZAC[J].layers[1].ifaces[10+K].temp_gues
+            TDA3 = DHSNZAC[I].layers[0].nodes[10+K].temp_gues
+            TDA4 = DHSNZAC[I].layers[1].ifaces[10+K].temp_gues
             TDA6=0.5*(TDA3+TDA4)
             QDNA=TDA6/TOREF
             if (TDA6<=1000.0 and TDA6 > 473.0):#pending automate
-                RDOP = RDOP + TCDAC[J][K-1]*math.log(QDNA)
+                RDOP = RDOP + TCDAC[I][K-1]*math.log(QDNA)
             elif (TDA6 > 1000.0 and TDA6 <= 2000.0):
-                RDOP = RDOP + TCD2AC[J][K-1]*math.log(QDNA)
+                RDOP = RDOP + TCD2AC[I][K-1]*math.log(QDNA)
             else:
                 print("warning: Doppler out of range. Time = " + time)
                 sys.exit()
 
-            TAC1 = DHSNZAC[J].layers[2].nodes[K].temp_gues
-            TAC2 = DHSNZAC[J].layers[2].nodes[K].eface.temp_gues
+            TAC1 = DHSNZAC[I].layers[2].nodes[K].temp_gues
+            TAC2 = DHSNZAC[I].layers[2].nodes[K].eface.temp_gues
             TAC=0.5*(TAC1+TAC2)
-            RCL = RCL + TC2AC[J][K-1]*(TAC-TOREF)
+            RCL = RCL + TC2AC[I][K-1]*(TAC-TOREF)
 
             IFR = 0
             if (IFR==1): # fuel stuck to clad
-                RFL = RFL + TC1AC[J][K-1]*(TAC-TOREF)
+                RFL = RFL + TC1AC[I][K-1]*(TAC-TOREF)
             elif (IFR==0): # fuel free to expand
-                RFL = RFL + TC1AC[J][K-1]*(TDA6-TOREF)
+                RFL = RFL + TC1AC[I][K-1]*(TDA6-TOREF)
 
-        K = 0
         # bottom axial blanket region
-        TLAB1 = DHSNZLAB[J].layers[2].nodes[K].temp_gues
-        TLAB2 = DHSNZLAB[J].layers[2].nodes[K].eface.temp_gues
+        TLAB1 = DHSNZLAB[I].layers[2].nodes[0].temp_gues
+        TLAB2 = DHSNZLAB[I].layers[2].nodes[0].eface.temp_gues
         TLAB=0.5*(TLAB1+TLAB2)
-        RCL = RCL + TC2LAB[J]*(TLAB-TOREF)
+        RCL = RCL + TC2LAB[I]*(TLAB-TOREF)
 
-        TNALAB = PipeNZLAB[J].dnode.ttemp_gues
-        RNA = RNA + TC3LAB[J]*(TNALAB-TOREF)
+        TNALAB = PipeNZLAB[I].dnode.ttemp_gues
+        RNA = RNA + TC3LAB[I]*(TNALAB-TOREF)
 
-        TDL3 = DHSNZLAB[J].layers[0].nodes[1+K].temp_gues
-        TDL4 = DHSNZLAB[J].layers[1].ifaces[1+K].temp_gues
+        TDL3 = DHSNZLAB[I].layers[0].nodes[1].temp_gues
+        TDL4 = DHSNZLAB[I].layers[1].ifaces[1].temp_gues
         TDL6=0.5*(TDL3+TDL4)
         QDNL=TDL6/TOREF
         if (TDL6<=1000.0 and TDL6 > 473.0):
-            RDOP = RDOP + TCDLAB[J]*math.log(QDNL)
+            RDOP = RDOP + TCDLAB[I]*math.log(QDNL)
         elif (TDL6 > 1000.0 and TDL6 <= 2000.0):
-            RDOP = RDOP + TCD2LAB[J]*math.log(QDNL)
+            RDOP = RDOP + TCD2LAB[I]*math.log(QDNL)
         else:
           print("warning: Doppler out of range. time = " + Time)
           sys.exit()
 
         if (IFR==1): #fuel stuck to clad
-            RFL = RFL + TC1LAB[J]*(TLAB-TOREF)
+            RFL = RFL + TC1LAB[I]*(TLAB-TOREF)
         elif (IFR==0): #fuel free to expand
-            RFL = RFL + TC1LAB[J]*(TDL6-TOREF)
+            RFL = RFL + TC1LAB[I]*(TDL6-TOREF)
 
         # upper axial blanket
-        TUAB1 = DHSNZUAB[J].layers[2].nodes[K].temp_gues
-        TUAB2 = DHSNZUAB[J].layers[2].nodes[K].eface.temp_gues
+        TUAB1 = DHSNZUAB[I].layers[2].nodes[0].temp_gues
+        TUAB2 = DHSNZUAB[I].layers[2].nodes[0].eface.temp_gues
         TUAB = 0.5*(TUAB1+TUAB2)
-        RCL = RCL + TC2UAB[J]*(TUAB-TOREF)
+        RCL = RCL + TC2UAB[I]*(TUAB-TOREF)
 
-        TNAUAB = PipeNZUAB[J].dnode.ttemp_gues
-        RNA = RNA + TC3UAB[J]*(TNAUAB-TOREF)
+        TNAUAB = PipeNZUAB[I].dnode.ttemp_gues
+        RNA = RNA + TC3UAB[I]*(TNAUAB-TOREF)
 
-        TDU3 = DHSNZUAB[J].layers[0].nodes[1+K].temp_gues
-        TDU4 = DHSNZUAB[J].layers[1].ifaces[1+K].temp_gues
+        TDU3 = DHSNZUAB[I].layers[0].nodes[1].temp_gues
+        TDU4 = DHSNZUAB[I].layers[1].ifaces[1].temp_gues
         TDU6=0.5*(TDU3+TDU4)
         QDNU=TDU6/TOREF
         if (TDU6<=1000.0 and TDU6 > 473.0):
-            RDOP = RDOP + TCDUAB[J]*math.log(QDNU)
+            RDOP = RDOP + TCDUAB[I]*math.log(QDNU)
         elif (TDU6 > 1000.0 and TDU6 <= 2000.0):
-            RDOP = RDOP + TCD2UAB[J]*math.log(QDNU)
+            RDOP = RDOP + TCD2UAB[I]*math.log(QDNU)
         else:
             print("warning: Doppler out of range. time = " + Time)
             sys.exit()
 
         if (IFR==1): #fuel stuck to clad
-            RFL = RFL + TC1UAB[J]*(TUAB-TOREF)
+            RFL = RFL + TC1UAB[I]*(TUAB-TOREF)
         elif (IFR==0): #fuel free to expand
-            RFL = RFL + TC1UAB[J]*(TDU6-TOREF)
+            RFL = RFL + TC1UAB[I]*(TDU6-TOREF)
 
         TRCL = TRCL + RCL
         TRFL = TRFL + RFL
         TRNA = TRNA + RNA
         TRDOP = TRDOP + RDOP
 
-    print ("flag1",TRNA*1E5,TRDOP*1E5,TRFL*1E5,TRCL*1E5)
+    # calculate RBMF
+    RBMF = 0.0
+    for I in range(NZNR):
+        SUM1 = 0.0
+        for K in range(10): # fuel region
+            if (IFR==1):
+                TAC1 = DHSNZAC[I].layers[2].nodes[K].temp_gues
+                TAC2 = DHSNZAC[I].layers[2].nodes[K].eface.temp_gues
+                TLAB1 = DHSNZLAB[I].layers[2].nodes[0].temp_gues
+                TLAB2 = DHSNZLAB[I].layers[2].nodes[0].eface.temp_gues
+                TUAB1 = DHSNZUAB[I].layers[2].nodes[0].temp_gues
+                TUAB2 = DHSNZUAB[I].layers[2].nodes[0].eface.temp_gues
+                TAC=0.5*(TAC1+TAC2)
+                SUM1=SUM1+TAC-TOREF
+                TLAB=0.5*(TLAB1+TLAB2)
+                TUAB=0.5*(TUAB1+TUAB2)
+            else:
+                TDA3 = DHSNZAC[I].layers[0].nodes[10+K].temp_gues
+                TDA4 = DHSNZAC[I].layers[1].ifaces[10+K].temp_gues
+                TDA6 = 0.5*(TDA3+TDA4)
+                TDL3 = DHSNZLAB[I].layers[0].nodes[1].temp_gues
+                TDL4 = DHSNZLAB[I].layers[1].ifaces[1].temp_gues
+                TDL6 = 0.5*(TDL3+TDL4)
+                TDU3 = DHSNZUAB[I].layers[0].nodes[1].temp_gues
+                TDU4 = DHSNZUAB[I].layers[1].ifaces[1].temp_gues
+                TDU6 = 0.5*(TDU3+TDU4)
+                SUM1 = SUM1+TDA6-TOREF
+
+        if (IFR==1): #upper and lower axial blanket region
+            SUM1=SUM1+TLAB-TOREF
+            SUM1=SUM1+TUAB-TOREF
+        else:
+            SUM1=SUM1+TDL6-TOREF
+            SUM1=SUM1+TDU6-TOREF
+
+        RBMF = RBMF + TC1AC[I][9]*SUM1*(-1.0);
+
+    print ("flag1",TRNA*1E5,TRDOP*1E5,TRFL*1E5,TRCL*1E5,RBMF*1E5)
     sys.exit()
 
 action_setup.Action(None,None,pk1)
