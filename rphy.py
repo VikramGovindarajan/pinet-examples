@@ -19,35 +19,6 @@ double DLCR=ALCR*EFLCR*(DTC.Value-273.15);
 double DLRV=ALRV*EFLRV*(DTR.Value-273.15);
 RC.Value = WDCR*(DLCR-DLRV);
 
-double [] gemW= new double [] {-4.9759601E-03,-4.9759601E-03,-4.9727950E-03,-4.9465660E-03,
-     -4.8999230E-03,-4.8770560E-03,-4.5790760E-03,
-     -4.5042170E-03,-4.0803270E-03,-3.6035070E-03,
-     -3.1068070E-03,-2.6024970E-03,-2.0963570E-03,
-     -1.6033470E-03,-1.1575970E-03,-7.7857700E-04,
-     -4.5669700E-04,-2.0180700E-04,-1.6020400E-04,
-    -2.3214000E-05,-5.4510000E-06,0.0000000E+00};
-     
-double [] gemh= new double [] {0.0,25.520,37.250,52.770,62.410,65.270,79.860,81.910,
-     91.138,100.366,109.594,118.822,128.050,137.278,146.506,
-    155.734,164.962,174.190,176.240,189.540,199.780,207.350};
-
-  IPS.Core.Component PipeRIP = IPS.Server.IProject.GetInstance().GetComponent("GER - 1");
-  IPS.Properties.Double QR = PipeRIP.GetPropertyFromFullDisplayName("{Flow Element Results,Generic}Total mass flow") as IPS.Properties.Double;
-  double geml=265.0-539504/(2440.13+QR*QR/(734.08*3*734.08*3)*100*100);
-  geml=geml-18.59;      
-  if (geml <= 25.3 || geml >= 207.35) {
-    IPS.Task.ConsoleSolverOutputProvider.GetConsoleOutputWindow().AddTextLine("warning: geml out of range time = " + Time);
-  }
-
-  for (K=1;K<=22;K++) {
-    if (geml<=gemh[K-1]) {
-      RGEM.Value=gemW[K-1]*450.0/497.59601-(gemW[K-1]*450.0/497.59601-gemW[K-1-1]*450.0/497.59601)/(gemh[K-1]-gemh[K-1-1])*(gemh[K-1]-geml);
-      break;
-    }
-  }
-
-TFR=TRFL.Value+TRCL.Value+TRNA.Value+TRDOP.Value+RBMF.Value+RG.Value+RC.Value+RGEM.Value;
-
 if (Time==0) {
    REXTSS.Value = -TFR;
    RTOT.Value  = 0;

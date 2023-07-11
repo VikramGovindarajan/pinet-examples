@@ -143,7 +143,7 @@ scheduler.delt = 1.
 scheduler.etime = 900    
 
 
-def pk1():
+def QS3(time,delt):
 
     # reading components
     from PINET.project import get_comp
@@ -344,8 +344,64 @@ def pk1():
             RGEM = gemW[K-1]*450.0/497.59601-(gemW[K-1]*450.0/497.59601-gemW[K-1-1]*450.0/497.59601)/(gemh[K-1]-gemh[K-1-1])*(gemh[K-1]-geml)
             break
 
-    TFR = TRFL+TRCL+TRNA+TRDOP+RGEM #+RBMF.Value+RG.Value+RC.Value
+    TFR = TRFL+TRCL+TRNA+TRDOP+RGEM #+RBMF.Value.Value+RG.Value+RC.Value
     return TFR*1.E5
 
-# action_setup.Action(None,None,pk1)
-post.Calculate(pk1)
+
+def QSDTRG(time,delt):
+    TG = 4.7572736
+    from PINET.project import get_comp
+    NodeIP = get_comp("node1")
+    DT = NodeIP.ttemp_gues
+    TOREF = 200.0
+    DTRI = DT-TOREF
+    global DTRI0,DTRG0,DTRG
+    if (time==0.0):
+        DTRG  = DTRI
+        DTRG0 = DTRI
+        DTRI0 = DTRI
+    else:
+        DTRG  = (0.5*delt/TG * (DTRI+DTRI0-DTRG0) + DTRG0)/(1+0.5*delt/TG)
+        DTRG0 = DTRG
+        DTRI0 = DTRI
+    return DTRG
+
+def QSDTRV(time,delt):
+    TRV = 27.314107
+    from PINET.project import get_comp
+    NodeIP = get_comp("node1")
+    DT = NodeIP.ttemp_gues
+    TOREF = 200.0
+    DTRI = DT-TOREF
+    global DTRV0,DTRV
+    if (time==0.0):
+        DTRV = DTRI
+        DTRV0 = DTRI
+    else:
+        DTRV = (0.5*delt/TRV * (DTRI+DTRI0-DTRV0) + DTRV0)/(1+0.5*delt/TRV)
+        DTRV0 = DTRV
+    return DTRV
+
+def QSDTRC(time,delt):
+    TCDM = 22.0
+    from PINET.project import get_comp
+    NodeOP = get_comp("node7")
+    DT = NodeOP.ttemp_gues
+    TOREF = 200.0
+    DTRO = DT-TOREF
+    global DTRO0,DTRC0,DTRC
+    if (time==0.0):
+        DTRC = DTRO
+        DTRC0 = DTRO
+        DTRO0 = DTRO
+    else:
+        DTRC = (0.5*delt/TCDM * (DTRO+DTRO0-DTRO0) + DTRO0)/(1+0.5*delt/TCDM)
+        DTRC0 = DTRC
+        DTRO0 = DTRO
+    return DTRC
+
+# action_setup.Action(None,None,QS3)
+post.Calculate(QS3)
+post.Calculate(QSDTRG)
+post.Calculate(QSDTRV)
+post.Calculate(QSDTRC)
