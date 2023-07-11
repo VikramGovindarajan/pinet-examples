@@ -143,7 +143,7 @@ scheduler.delt = 1.
 scheduler.etime = 900    
 
 
-def pk1(time,delt):
+def pk1():
 
     # reading components
     from PINET.project import get_comp
@@ -195,7 +195,7 @@ def pk1(time,delt):
 
     from rpdat import TOREF,TFR
     
-    from rpdat import TC1AC, TC1LAB, TC1UAB, TC2AC, TC2LAB, TC2UAB, TC3AC, TC3LAB, TC3UAB, TCDAC, TCDLAB, TCDUAB, TCD2AC, TCD2LAB, TCD2UAB
+    from rpdat import TC1AC, TC1LAB, TC1UAB, TC2AC, TC2LAB, TC2UAB, TC3AC, TC3LAB, TC3UAB, TCDAC, TCDLAB, TCDUAB, TCD2AC, TCD2LAB, TCD2UAB, gemW, gemh
 
     # calculate TRFL, TRCL, TRNA, TRDOP
     TRFL  = 0.0
@@ -332,7 +332,20 @@ def pk1(time,delt):
 
         RBMF = RBMF + TC1AC[I][9]*SUM1*(-1.0);
 
-    print ("flag1",TRNA*1E5,TRDOP*1E5,TRFL*1E5,TRCL*1E5,RBMF*1E5)
-    sys.exit()
+    # calculate RGEM
+    QR = sum([pipe.mflow for pipe in PipeNZLAB])
+    geml = 265.0-539504/(2440.13+QR*QR/(734.08*3*734.08*3)*100*100)
+    geml = geml-18.59
+    if (geml <= 25.3 or geml >= 207.35):
+        print("warning: geml out of range time = " + Time)
 
-action_setup.Action(None,None,pk1)
+    for K in range(1,22+1):
+        if (geml <= gemh[K-1]):
+            RGEM = gemW[K-1]*450.0/497.59601-(gemW[K-1]*450.0/497.59601-gemW[K-1-1]*450.0/497.59601)/(gemh[K-1]-gemh[K-1-1])*(gemh[K-1]-geml)
+            break
+
+    TFR = TRFL+TRCL+TRNA+TRDOP+RGEM #+RBMF.Value+RG.Value+RC.Value
+    return TFR*1.E5
+
+# action_setup.Action(None,None,pk1)
+post.Calculate(pk1)
