@@ -1,5 +1,4 @@
 TOREF = 200.0+273.15
-TFR = 0.0
 
 TC1AC = []
 TC1LAB = []

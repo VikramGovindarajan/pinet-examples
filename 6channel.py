@@ -197,7 +197,7 @@ def rho_fb():
     PipeNZAC .append(get_comp ("pipe62") )
     PipeNZUAB.append(get_comp ("pipe63") )
 
-    from rpdat import TOREF,TFR
+    from rpdat import TOREF
     
     from rpdat import TC1AC, TC1LAB, TC1UAB, TC2AC, TC2LAB, TC2UAB, TC3AC, TC3LAB, TC3UAB, TCDAC, TCDLAB, TCDUAB, TCD2AC, TCD2LAB, TCD2UAB, gemW, gemh
 
@@ -368,18 +368,116 @@ def rho_fb():
     DLRV = ALRV*EFLRV*(DTR-273.15)
     RC = WDCR*(DLCR-DLRV)
 
-    TFR = rho_fb.TRFL+TRCL+TRNA+TRDOP+rho_fb.RGEM+RBMF+RG+RC
-    return TFR*1.E5
+    rho_fb.TFR = rho_fb.TRFL+TRCL+TRNA+TRDOP+rho_fb.RGEM+RBMF+RG+RC
+    return rho_fb.TFR*1.E5
+
+global powpk
+def powpk():
+    from PINET.scheduler import time,delt
+    
+    # inputs from simulation
+    if (time==0):
+        powpk.REXTSS = -rho_fb.TFR
+        powpk.RTOT = 0
+    else:
+        powpk.REXT = powpk.REXTSS #+REXTCR.Value+REXTSC.Value;
+        powpk.RTOT = powpk.REXT + rho_fb.TFR
+    DKK = powpk.RTOT
+
+    # Q2 calculation
+    DT = delt
+
+    # local variable initialization
+    QALPHA = [0,0,0,0,0,0]
+    QGAMMA = [0,0,0,0,0,0]
+    AUXCI1 = [0,0,0,0,0,0]
+    AUXCI2 = [0,0,0,0,0,0]
+
+    # user inputs
+    QBETA = (8.98184E-05,7.51112E-04,6.56706E-04,1.22693E-03,5.30909E-04,1.69559E-04)
+    QLAMBD = (1.29701E-02,3.13017E-02,1.34437E-01,3.41507E-01,1.35304E+00,3.70998E+00)
+    QL = 4.780164E-07
+
+
+    #transient preparatory calculation
+    QB = 0.0
+    for M in range(6):
+        QB = QB + QBETA[M]
+    
+    for M in range(6):
+        AUXCI1[M] =  2.0+DT*QLAMBD[M]
+        AUXCI2[M] = (2.0-DT*QLAMBD[M])/AUXCI1[M]
+    AUXCI1 = tuple(i for i in AUXCI1)
+    AUXCI2 = tuple(i for i in AUXCI2)
+
+    if (time==0): # SS calculation
+        powpk.Q2SS = 0.923344
+
+        powpk.Q2d = powpk.Q2SS
+        powpk.Q2  = powpk.Q2SS
+
+        powpk.CM1d = (QBETA[0]*powpk.Q2d)/(QL*QLAMBD[0])
+        powpk.CM2d = (QBETA[1]*powpk.Q2d)/(QL*QLAMBD[1])
+        powpk.CM3d = (QBETA[2]*powpk.Q2d)/(QL*QLAMBD[2])
+        powpk.CM4d = (QBETA[3]*powpk.Q2d)/(QL*QLAMBD[3])
+        powpk.CM5d = (QBETA[4]*powpk.Q2d)/(QL*QLAMBD[4])
+        powpk.CM6d = (QBETA[5]*powpk.Q2d)/(QL*QLAMBD[5])
+        powpk.CM1  = powpk.CM1d
+        powpk.CM2  = powpk.CM2d
+        powpk.CM3  = powpk.CM3d
+        powpk.CM4  = powpk.CM4d
+        powpk.CM5  = powpk.CM5d
+        powpk.CM6  = powpk.CM6d
+
+
+    else: #transient calculation
+        A1 = DT*(1.0+DKK)/QL
+        A11 = 0.0
+        for M in range(6):
+            QALPHA[M] = QBETA[M]*A1/AUXCI1[M]
+            A11       = A11 + QALPHA[M]*QLAMBD[M]
+
+        QGAMMA[0] = AUXCI2[0]*powpk.CM1d + powpk.Q2d*QALPHA[0]
+        QGAMMA[1] = AUXCI2[1]*powpk.CM2d + powpk.Q2d*QALPHA[1]
+        QGAMMA[2] = AUXCI2[2]*powpk.CM3d + powpk.Q2d*QALPHA[2]
+        QGAMMA[3] = AUXCI2[3]*powpk.CM4d + powpk.Q2d*QALPHA[3]
+        QGAMMA[4] = AUXCI2[4]*powpk.CM5d + powpk.Q2d*QALPHA[4]
+        QGAMMA[5] = AUXCI2[5]*powpk.CM6d + powpk.Q2d*QALPHA[5]
+        
+        A22 = 0.0
+        for M in range(6):
+            A22 = A22 + QGAMMA[M]*QLAMBD[M]
+
+        A2 = (DKK - QB*(1.0+DKK))/QL
+        powpk.Q2 = -A22/(A2+A11)
+        powpk.Q2d = powpk.Q2
+
+        powpk.CM1  = powpk.Q2*QALPHA[0] + QGAMMA[0]
+        powpk.CM2  = powpk.Q2*QALPHA[1] + QGAMMA[1]
+        powpk.CM3  = powpk.Q2*QALPHA[2] + QGAMMA[2]
+        powpk.CM4  = powpk.Q2*QALPHA[3] + QGAMMA[3]
+        powpk.CM5  = powpk.Q2*QALPHA[4] + QGAMMA[4]
+        powpk.CM6  = powpk.Q2*QALPHA[5] + QGAMMA[5]
+        powpk.CM1d = powpk.CM1
+        powpk.CM2d = powpk.CM2
+        powpk.CM3d = powpk.CM3
+        powpk.CM4d = powpk.CM4
+        powpk.CM5d = powpk.CM5
+        powpk.CM6d = powpk.CM6
+
+    powpk.QMOY = 0.076656
+    powpk.PO   = powpk.Q2 + powpk.QMOY
+    return powpk.PO
 
 def fun3(*comps):
     return comps[0].DTST
 
 # action_setup.Action(None,None,rho_fb)
 post.Calculate(rho_fb)
+post.Calculate(lambda: rho_fb.TRFL*1.E5)
 
-def fun_TRFL():
-    return rho_fb.TRFL*1.E5
-post.Calculate(fun_TRFL)
+post.Calculate(powpk)
+post.Calculate(lambda: powpk.Q2)
 
 post.Calculate(fun3,"MassDTRC")
 post.Calculate(fun3,"MassDTRG")
