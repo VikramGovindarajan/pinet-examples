@@ -1,23 +1,5 @@
 
 
-// calculate TCGR, TCCR
-IPS.Core.Component QSDTRC = IPS.Server.IProject.GetInstance().GetComponent("QS-DTRC");
-IPS.Properties.Double DTC = QSDTRC.GetPropertyFromFullDisplayName("{Script}Script.Script Inputs And Outputs.{OUTPUT}DTRC") as IPS.Properties.Double;
-IPS.Core.Component QSDTRG = IPS.Server.IProject.GetInstance().GetComponent("QS-DTRG");
-IPS.Properties.Double DTG = QSDTRG.GetPropertyFromFullDisplayName("{Script}Script.Script Inputs And Outputs.{OUTPUT}DTRG") as IPS.Properties.Double;
-IPS.Core.Component QSDTRV = IPS.Server.IProject.GetInstance().GetComponent("QS-DTRV");
-IPS.Properties.Double DTR = QSDTRV.GetPropertyFromFullDisplayName("{Script}Script.Script Inputs And Outputs.{OUTPUT}DTRV") as IPS.Properties.Double;
-
-double TCGR = -0.952410817E-5;
-double WDCR = -7.82E-5*1000.0;
-RG.Value = TCGR*(DTG.Value-273.15);
-double ALCR = 1.60e-5;
-double ALRV = 1.60e-5;
-double EFLCR =4.89;
-double EFLRV =7.341;
-double DLCR=ALCR*EFLCR*(DTC.Value-273.15);
-double DLRV=ALRV*EFLRV*(DTR.Value-273.15);
-RC.Value = WDCR*(DLCR-DLRV);
 
 if (Time==0) {
    REXTSS.Value = -TFR;

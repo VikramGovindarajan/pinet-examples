@@ -110,6 +110,10 @@ while i<=5:
 global pipe7
 pipe7=circuit1.add_pipe("pipe7",0.003238,2.4722,"node1","node7",0.03,1,1,cfarea=0.12982,Kforward=147.6114,heat_input=7113740.)
 
+HTcomp.LumpedMass("MassDTRG",4.7572736,"node1")
+HTcomp.LumpedMass("MassDTRV",27.314107,"node1")
+HTcomp.LumpedMass("MassDTRC",22.0,"node7")
+
 global series1
 series1=csv_reader("power.csv")
 def power_trans(time,delt):
@@ -143,7 +147,7 @@ scheduler.delt = 1.
 scheduler.etime = 900    
 
 
-def QS3(time,delt):
+def QS3():
 
     # reading components
     from PINET.project import get_comp
@@ -344,64 +348,35 @@ def QS3(time,delt):
             RGEM = gemW[K-1]*450.0/497.59601-(gemW[K-1]*450.0/497.59601-gemW[K-1-1]*450.0/497.59601)/(gemh[K-1]-gemh[K-1-1])*(gemh[K-1]-geml)
             break
 
-    TFR = TRFL+TRCL+TRNA+TRDOP+RGEM #+RBMF.Value.Value+RG.Value+RC.Value
+    # calculate TCGR, TCCR
+    # QSDTRC = get_comp("QSDTRC")
+    mass = get_comp("MassDTRC")
+    DTC = mass.DTST
+    mass = get_comp("MassDTRG")
+    DTG = mass.DTST
+    mass = get_comp("MassDTRV")
+    DTR = mass.DTST
+
+    TCGR = -0.952410817E-5
+    WDCR = -7.82E-5*1000.0
+    RG = TCGR*(DTG-273.15)
+    ALCR = 1.60e-5
+    ALRV = 1.60e-5
+    EFLCR = 4.89
+    EFLRV = 7.341
+    DLCR = ALCR*EFLCR*(DTC-273.15)
+    DLRV = ALRV*EFLRV*(DTR-273.15)
+    RC = WDCR*(DLCR-DLRV)
+
+    TFR = TRFL+TRCL+TRNA+TRDOP+RGEM+RBMF+RG+RC
     return TFR*1.E5
 
-
-def QSDTRG(time,delt):
-    TG = 4.7572736
-    from PINET.project import get_comp
-    NodeIP = get_comp("node1")
-    DT = NodeIP.ttemp_gues
-    TOREF = 200.0
-    DTRI = DT-TOREF
-    global DTRI0,DTRG0,DTRG
-    if (time==0.0):
-        DTRG  = DTRI
-        DTRG0 = DTRI
-        DTRI0 = DTRI
-    else:
-        DTRG  = (0.5*delt/TG * (DTRI+DTRI0-DTRG0) + DTRG0)/(1+0.5*delt/TG)
-        DTRG0 = DTRG
-        DTRI0 = DTRI
-    return DTRG
-
-def QSDTRV(time,delt):
-    TRV = 27.314107
-    from PINET.project import get_comp
-    NodeIP = get_comp("node1")
-    DT = NodeIP.ttemp_gues
-    TOREF = 200.0
-    DTRI = DT-TOREF
-    global DTRV0,DTRV
-    if (time==0.0):
-        DTRV = DTRI
-        DTRV0 = DTRI
-    else:
-        DTRV = (0.5*delt/TRV * (DTRI+DTRI0-DTRV0) + DTRV0)/(1+0.5*delt/TRV)
-        DTRV0 = DTRV
-    return DTRV
-
-def QSDTRC(time,delt):
-    TCDM = 22.0
-    from PINET.project import get_comp
-    NodeOP = get_comp("node7")
-    DT = NodeOP.ttemp_gues
-    TOREF = 200.0
-    DTRO = DT-TOREF
-    global DTRO0,DTRC0,DTRC
-    if (time==0.0):
-        DTRC = DTRO
-        DTRC0 = DTRO
-        DTRO0 = DTRO
-    else:
-        DTRC = (0.5*delt/TCDM * (DTRO+DTRO0-DTRO0) + DTRO0)/(1+0.5*delt/TCDM)
-        DTRC0 = DTRC
-        DTRO0 = DTRO
-    return DTRC
+def fun3(*comps):
+    return comps[0].DTST
 
 # action_setup.Action(None,None,QS3)
 post.Calculate(QS3)
-post.Calculate(QSDTRG)
-post.Calculate(QSDTRV)
-post.Calculate(QSDTRC)
+
+post.Calculate(fun3,"MassDTRC")
+post.Calculate(fun3,"MassDTRG")
+post.Calculate(fun3,"MassDTRV")
