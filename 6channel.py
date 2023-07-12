@@ -146,8 +146,8 @@ from PINET import scheduler
 scheduler.delt = 1.
 scheduler.etime = 900    
 
-
-def QS3():
+global rho_fb
+def rho_fb():
 
     # reading components
     from PINET.project import get_comp
@@ -201,8 +201,8 @@ def QS3():
     
     from rpdat import TC1AC, TC1LAB, TC1UAB, TC2AC, TC2LAB, TC2UAB, TC3AC, TC3LAB, TC3UAB, TCDAC, TCDLAB, TCDUAB, TCD2AC, TCD2LAB, TCD2UAB, gemW, gemh
 
-    # calculate TRFL, TRCL, TRNA, TRDOP
-    TRFL  = 0.0
+    # calculate rho_fb.TRFL, TRCL, TRNA, TRDOP
+    rho_fb.TRFL  = 0.0
     TRCL  = 0.0
     TRNA  = 0.0
     TRDOP = 0.0
@@ -295,7 +295,7 @@ def QS3():
             RFL = RFL + TC1UAB[I]*(TDU6-TOREF)
 
         TRCL = TRCL + RCL
-        TRFL = TRFL + RFL
+        rho_fb.TRFL = rho_fb.TRFL + RFL
         TRNA = TRNA + RNA
         TRDOP = TRDOP + RDOP
 
@@ -345,7 +345,7 @@ def QS3():
 
     for K in range(1,22+1):
         if (geml <= gemh[K-1]):
-            RGEM = gemW[K-1]*450.0/497.59601-(gemW[K-1]*450.0/497.59601-gemW[K-1-1]*450.0/497.59601)/(gemh[K-1]-gemh[K-1-1])*(gemh[K-1]-geml)
+            rho_fb.RGEM = gemW[K-1]*450.0/497.59601-(gemW[K-1]*450.0/497.59601-gemW[K-1-1]*450.0/497.59601)/(gemh[K-1]-gemh[K-1-1])*(gemh[K-1]-geml)
             break
 
     # calculate TCGR, TCCR
@@ -368,14 +368,18 @@ def QS3():
     DLRV = ALRV*EFLRV*(DTR-273.15)
     RC = WDCR*(DLCR-DLRV)
 
-    TFR = TRFL+TRCL+TRNA+TRDOP+RGEM+RBMF+RG+RC
+    TFR = rho_fb.TRFL+TRCL+TRNA+TRDOP+rho_fb.RGEM+RBMF+RG+RC
     return TFR*1.E5
 
 def fun3(*comps):
     return comps[0].DTST
 
-# action_setup.Action(None,None,QS3)
-post.Calculate(QS3)
+# action_setup.Action(None,None,rho_fb)
+post.Calculate(rho_fb)
+
+def fun_TRFL():
+    return rho_fb.TRFL*1.E5
+post.Calculate(fun_TRFL)
 
 post.Calculate(fun3,"MassDTRC")
 post.Calculate(fun3,"MassDTRG")
