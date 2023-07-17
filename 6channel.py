@@ -115,21 +115,21 @@ HTcomp.LumpedMass("MassDTRV",27.314107,"node1")
 HTcomp.LumpedMass("MassDTRC",22.0,"node7")
 
 global series1
-series1=csv_reader("power.csv")
+series1=csv_reader("decay.csv")
 def power_trans(time,delt):
     m=0
     while m<=5:
         n=0
         while n<=2:
             if n==0:
-                p[m*3+n].heat_input = series1(time)*HILAB[m]
+                p[m*3+n].heat_input = powpk.PO*HILAB[m]
             elif n==1:
-                p[m*3+n].heat_input = series1(time)*HIAC[m]
+                p[m*3+n].heat_input = powpk.PO*HIAC[m]
             else:
-                p[m*3+n].heat_input = series1(time)*HIUAB[m]
+                p[m*3+n].heat_input = powpk.PO*HIUAB[m]
             n+=1
         m+=1
-    pipe7.heat_input = series1(time) * 7113740.
+    pipe7.heat_input = powpk.PO * 7113740.
 action_setup.Action(None,None,power_trans)
 global series2
 series2=csv_reader("msource.csv")
@@ -465,7 +465,7 @@ def powpk():
         powpk.CM5d = powpk.CM5
         powpk.CM6d = powpk.CM6
 
-    powpk.QMOY = 0.076656
+    powpk.QMOY = series1(time) #0.076656
     powpk.PO   = powpk.Q2 + powpk.QMOY
     return powpk.PO
 
@@ -474,9 +474,8 @@ def fun3(*comps):
 
 # action_setup.Action(None,None,rho_fb)
 post.Calculate(rho_fb)
-post.Calculate(lambda: rho_fb.TRFL*1.E5)
-
 post.Calculate(powpk)
+post.Calculate(lambda: powpk.RTOT*1.E5)
 post.Calculate(lambda: powpk.Q2)
 
 post.Calculate(fun3,"MassDTRC")
