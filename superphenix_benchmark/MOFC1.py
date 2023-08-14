@@ -51,17 +51,17 @@ def fun(flow_elem,WallTemp):
     
 circuit1.add_pipe("pipe1", 3.157, 0.2, "node0", "node1", 0.001, 1, 1,  cfarea=7.83)
 circuit1.add_pipe("pipe2", 3.518, 0.2, "node2", "node3", 0.001, 1, 1,  cfarea=9.72)
+
+EF =[0.2,0.75,1.05,2.05,2.35,2.9,3.1] #elevation of nodes in fuel channel
+
 #_____________________________________________________________________________________________
 #CHANNEL 1 (inner core) (IC)
 
 #nodes (data= table 3)
-circuit1.add_node("node11", elevation= 0.2)
-circuit1.add_node("node12", elevation= 0.75)
-circuit1.add_node("node13", elevation= 1.05)
-circuit1.add_node("node14", elevation= 2.05)
-circuit1.add_node("node15", elevation= 2.35)
-circuit1.add_node("node16", elevation= 2.9)
-circuit1.add_node("node17", elevation= 3.1)
+i = 0
+for j in range(7):
+    a=str(i+1)+str(j+1)
+    circuit1.add_node("node"+a,elevation=EF[j])
 
 #parameters for the pipes
 
@@ -141,13 +141,10 @@ layer143 = hslab14.add_layer(thk_elem=2.570E-3,thk_cros=H_fer,nnodes=3,darea=P1_
 #CHANNEL 2 (outer core) (OC)
 
 #nodes (data= table 3)
-circuit1.add_node("node21", elevation= 0.2)
-circuit1.add_node("node22", elevation= 0.75)
-circuit1.add_node("node23", elevation= 1.05)
-circuit1.add_node("node24", elevation= 2.05)
-circuit1.add_node("node25", elevation= 2.35)
-circuit1.add_node("node26", elevation= 2.9)
-circuit1.add_node("node27", elevation= 3.1)
+i = 1
+for j in range(7):
+    a=str(i+1)+str(j+1)
+    circuit1.add_node("node"+a,elevation=EF[j])
 
 #parameters for the pipes
 
@@ -329,4 +326,9 @@ action_setup.Action(None,None,fun3)
 
 from PINET import scheduler
 scheduler.delt = 10
-scheduler.etime = 3000
+scheduler.etime = 2210
+
+def fun4(*comps):
+    return comps[1].ttemp_gues-comps[0].ttemp_gues
+post.Calculate(fun4,"node1","node2")
+

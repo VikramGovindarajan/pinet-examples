@@ -61,11 +61,10 @@ global p
 p=[]
 i=0
 while i<=5:
-    j=0
-    while j<=4:
+    for j in range(5):
         a=str(i+1)+str(j+1)
         circuit1.add_node("node"+a,elevation=E[j])
-        j+=1
+
     k=0    
     while k<=5:
         b=str(i+1)+str(k+1)
@@ -151,7 +150,7 @@ solver_settings.conv_crit_temp_trans = 1.E-7
 
 from PINET import scheduler
 scheduler.delt = 1.
-scheduler.etime = 201.    
+scheduler.etime = 51.    
 
 global rho_fb
 def rho_fb():
