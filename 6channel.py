@@ -51,7 +51,12 @@ global HIAC
 HIAC=[3316500,20275000,28279000,41711000,43479000,54461000]
 global HILAB
 HILAB=[9752.7,54413,70593,102010,88518,109640]
-AFF=[[0.077776,0.078353,0.080316,0.081924,0.084594,0.08889,0.077776,0.078353,0.080316,0.081924],[0.093363,0.093682,0.094493,0.09595,0.098532,0.10169,0.093363,0.093682,0.094493,0.09595],[0.10873,0.108895,0.109211,0.110592,0.113178,0.115791,0.10873,0.108895,0.109211,0.110592],[0.118943,0.119016,0.119091,0.120322,0.122793,0.124753,0.118943,0.119016,0.119091,0.120322],[0.123089,0.123074,0.122948,0.123891,0.126394,0.126694,0.123089,0.123074,0.122948,0.123891],[0.120939,0.120839,0.120487,0.120782,0.122085,0.120845,0.120939,0.120839,0.120487,0.120782]]
+AFF=[[0.077776,0.093363,0.108730,0.118943,0.123089,0.120939,0.112795,0.099371,0.081658,0.063335],
+     [0.078353,0.093682,0.108895,0.119016,0.123074,0.120839,0.112640,0.099237,0.081493,0.062772],
+     [0.080316,0.094493,0.109211,0.119091,0.122948,0.120487,0.112116,0.098895,0.081216,0.061226],
+     [0.081924,0.095950,0.110592,0.120322,0.123891,0.120782,0.111400,0.097186,0.078868,0.059086],
+     [0.084594,0.098532,0.113178,0.122793,0.126394,0.122085,0.109379,0.092788,0.074502,0.055754],
+     [0.088890,0.101690,0.115791,0.124753,0.126694,0.120845,0.106322,0.088871,0.071330,0.054815]]
 global p
 p=[]
 i=0
@@ -80,22 +85,22 @@ while i<=5:
         d=str(i+1)+str(l+1)
         if l==0:
             p.append(d+str(3))
-            g=HTcomp.HSlab("hslab"+d,"snode"+d,"hflux",0.0,"pipe"+d,"pipe",[fun1],FALAB[i],nlayers=3)
-            g.add_layer(3.81E-4,0.0203,2,FALABI[i],'SS23','User')
-            g.add_layer(1.4E-4,0.0203,2,GIFALAB[i],'gap23','User')
+            g=HTcomp.HSlab("hslab"+d,"snode"+d,"hflux",0.0,"pipe"+d,"pipe",[fun1],GIFALAB[i],nlayers=3)
             p[i*3+l]=g.add_layer(0.0024,0.0203,2,GIFALAB[i],'MOX23','User',heat_input=HILAB[i])
+            g.add_layer(1.4E-4,0.0203,2,FALABI[i],'gap24','User')
+            g.add_layer(3.81E-4,0.0203,2,FALAB[i],'SS23','User')
         elif l==1:
             p.append(d+str(3))
-            g=HTcomp.HSlab("hslab"+d,"snode"+d,"hflux",0.0,"pipe"+d,"pipe",[fun1],FAAC[i],nlayers=3)
-            g.add_layer(3.81E-4,0.9144,2,FAACI[i],'SS23','User')
-            g.add_layer(7.E-5,0.9144,2,GIFAAC[i],'gap23','User')
+            g=HTcomp.HSlab("hslab"+d,"snode"+d,"hflux",0.0,"pipe"+d,"pipe",[fun1],GIFAAC[i],nlayers=3)
             p[i*3+l]=g.add_layer(0.00247,0.9144,2,GIFAAC[i],'MOX23','User',10,heat_input=HIAC[i],AFF=AFF[i])
+            g.add_layer(7.E-5,0.9144,2,FAACI[i],'gap23','User')
+            g.add_layer(3.81E-4,0.9144,2,FAAC[i],'SS23','User')
         elif l==2:
             p.append(d+str(3))
-            g=HTcomp.HSlab("hslab"+d,"snode"+d,"hflux",0.0,"pipe"+d,"pipe",[fun1],FAUAB[i],nlayers=3)
-            g.add_layer(3.81E-4,0.0203,2,FAUABI[i],'SS23','User')
-            g.add_layer(1.4E-4,0.0203,2,GIFAUAB[i],'gap23','User')
+            g=HTcomp.HSlab("hslab"+d,"snode"+d,"hflux",0.0,"pipe"+d,"pipe",[fun1],GIFAUAB[i],nlayers=3)
             p[i*3+l]=g.add_layer(0.0024,0.0203,2,GIFAUAB[i],'MOX23','User',heat_input=HIUAB[i])
+            g.add_layer(1.4E-4,0.0203,2,FAUABI[i],'gap24','User')
+            g.add_layer(3.81E-4,0.0203,2,FAUAB[i],'SS23','User')
         elif l==3:
             g=HTcomp.HSlab("hslab"+d,"pipe"+d,"pipe",[fun1],"snode"+d,"hflux",0.0,FAUN1[i],nlayers=1)
             g.add_layer(0.0018497,0.1448,2,FAUN1[i],'SS23','User')
@@ -117,6 +122,8 @@ HTcomp.LumpedMass("MassDTRC",22.0,"node7")
 global series1
 series1=csv_reader("decay.csv")
 def power_trans(time,delt):
+    if time == 0:
+        powpk.PO = 0.986
     m=0
     while m<=5:
         n=0
@@ -201,11 +208,11 @@ def rho_fb():
     
     from rpdat import TC1AC, TC1LAB, TC1UAB, TC2AC, TC2LAB, TC2UAB, TC3AC, TC3LAB, TC3UAB, TCDAC, TCDLAB, TCDUAB, TCD2AC, TCD2LAB, TCD2UAB, gemW, gemh
 
-    # calculate rho_fb.TRFL, TRCL, TRNA, TRDOP
+    # calculate rho_fb.TRFL, rho_fb.TRCL, rho_fb.TRNA, rho_fb.TRDOP
     rho_fb.TRFL  = 0.0
-    TRCL  = 0.0
-    TRNA  = 0.0
-    TRDOP = 0.0
+    rho_fb.TRCL  = 0.0
+    rho_fb.TRNA  = 0.0
+    rho_fb.TRDOP = 0.0
 
     NZNR = 6 #no. of radial neutronic zones
     for I in range(NZNR):
@@ -216,11 +223,11 @@ def rho_fb():
 
         for K in range(10): #pending automate
             # fuel region 
-            TNAAC = PipeNZAC[I].faces[K].dnode.ttemp_gues
+            TNAAC = PipeNZAC[I].faces[K].dnode.stemp_gues
             RNA = RNA + TC3AC[I][K-1]*(TNAAC-TOREF)
             
             TDA3 = DHSNZAC[I].layers[0].nodes[10+K].temp_gues
-            TDA4 = DHSNZAC[I].layers[1].ifaces[10+K].temp_gues
+            TDA4 = (DHSNZAC[I].layers[0].nodes[10+K].temp_gues+DHSNZAC[I].layers[1].nodes[K].temp_gues)/2.
             TDA6=0.5*(TDA3+TDA4)
             QDNA=TDA6/TOREF
             if (TDA6<=1000.0 and TDA6 > 473.0):#pending automate
@@ -248,11 +255,11 @@ def rho_fb():
         TLAB=0.5*(TLAB1+TLAB2)
         RCL = RCL + TC2LAB[I]*(TLAB-TOREF)
 
-        TNALAB = PipeNZLAB[I].dnode.ttemp_gues
+        TNALAB = PipeNZLAB[I].dnode.stemp_gues
         RNA = RNA + TC3LAB[I]*(TNALAB-TOREF)
 
         TDL3 = DHSNZLAB[I].layers[0].nodes[1].temp_gues
-        TDL4 = DHSNZLAB[I].layers[1].ifaces[1].temp_gues
+        TDL4 = (DHSNZLAB[I].layers[0].nodes[1].temp_gues+DHSNZLAB[I].layers[1].nodes[0].temp_gues)/2.
         TDL6=0.5*(TDL3+TDL4)
         QDNL=TDL6/TOREF
         if (TDL6<=1000.0 and TDL6 > 473.0):
@@ -274,11 +281,11 @@ def rho_fb():
         TUAB = 0.5*(TUAB1+TUAB2)
         RCL = RCL + TC2UAB[I]*(TUAB-TOREF)
 
-        TNAUAB = PipeNZUAB[I].dnode.ttemp_gues
+        TNAUAB = PipeNZUAB[I].dnode.stemp_gues
         RNA = RNA + TC3UAB[I]*(TNAUAB-TOREF)
 
         TDU3 = DHSNZUAB[I].layers[0].nodes[1].temp_gues
-        TDU4 = DHSNZUAB[I].layers[1].ifaces[1].temp_gues
+        TDU4 = (DHSNZUAB[I].layers[0].nodes[1].temp_gues+DHSNZUAB[I].layers[1].nodes[0].temp_gues)/2.
         TDU6=0.5*(TDU3+TDU4)
         QDNU=TDU6/TOREF
         if (TDU6<=1000.0 and TDU6 > 473.0):
@@ -294,13 +301,13 @@ def rho_fb():
         elif (IFR==0): #fuel free to expand
             RFL = RFL + TC1UAB[I]*(TDU6-TOREF)
 
-        TRCL = TRCL + RCL
+        rho_fb.TRCL = rho_fb.TRCL + RCL
         rho_fb.TRFL = rho_fb.TRFL + RFL
-        TRNA = TRNA + RNA
-        TRDOP = TRDOP + RDOP
-
-    # calculate RBMF
-    RBMF = 0.0
+        rho_fb.TRNA = rho_fb.TRNA + RNA
+        rho_fb.TRDOP = rho_fb.TRDOP + RDOP
+    
+    # calculate rho_fb.RBMF
+    rho_fb.RBMF = 0.0
     for I in range(NZNR):
         SUM1 = 0.0
         for K in range(10): # fuel region
@@ -317,13 +324,13 @@ def rho_fb():
                 TUAB=0.5*(TUAB1+TUAB2)
             else:
                 TDA3 = DHSNZAC[I].layers[0].nodes[10+K].temp_gues
-                TDA4 = DHSNZAC[I].layers[1].ifaces[10+K].temp_gues
+                TDA4 = (DHSNZAC[I].layers[0].nodes[10+K].temp_gues+DHSNZAC[I].layers[1].nodes[K].temp_gues)/2.
                 TDA6 = 0.5*(TDA3+TDA4)
                 TDL3 = DHSNZLAB[I].layers[0].nodes[1].temp_gues
-                TDL4 = DHSNZLAB[I].layers[1].ifaces[1].temp_gues
+                TDL4 = (DHSNZLAB[I].layers[0].nodes[1].temp_gues+DHSNZLAB[I].layers[1].nodes[0].temp_gues)/2.
                 TDL6 = 0.5*(TDL3+TDL4)
                 TDU3 = DHSNZUAB[I].layers[0].nodes[1].temp_gues
-                TDU4 = DHSNZUAB[I].layers[1].ifaces[1].temp_gues
+                TDU4 = (DHSNZUAB[I].layers[0].nodes[1].temp_gues+DHSNZUAB[I].layers[1].nodes[0].temp_gues)/2.
                 TDU6 = 0.5*(TDU3+TDU4)
                 SUM1 = SUM1+TDA6-TOREF
 
@@ -334,10 +341,10 @@ def rho_fb():
             SUM1=SUM1+TDL6-TOREF
             SUM1=SUM1+TDU6-TOREF
 
-        RBMF = RBMF + TC1AC[I][9]*SUM1*(-1.0);
+        rho_fb.RBMF = rho_fb.RBMF + TC1AC[I][9]*SUM1*(-1.0);
 
     # calculate RGEM
-    QR = sum([pipe.mflow for pipe in PipeNZLAB])
+    QR = sum([pipe.mflow for pipe in PipeNZLAB]) + pipe7.mflow
     geml = 265.0-539504/(2440.13+QR*QR/(734.08*3*734.08*3)*100*100)
     geml = geml-18.59
     if (geml <= 25.3 or geml >= 207.35):
@@ -359,16 +366,16 @@ def rho_fb():
 
     TCGR = -0.952410817E-5
     WDCR = -7.82E-5*1000.0
-    RG = TCGR*(DTG-273.15)
+    rho_fb.RG = TCGR*(DTG-273.15)
     ALCR = 1.60e-5
     ALRV = 1.60e-5
     EFLCR = 4.89
     EFLRV = 7.341
     DLCR = ALCR*EFLCR*(DTC-273.15)
     DLRV = ALRV*EFLRV*(DTR-273.15)
-    RC = WDCR*(DLCR-DLRV)
+    rho_fb.RC = WDCR*(DLCR-DLRV)
 
-    rho_fb.TFR = rho_fb.TRFL+TRCL+TRNA+TRDOP+rho_fb.RGEM+RBMF+RG+RC
+    rho_fb.TFR = rho_fb.TRFL+rho_fb.TRCL+rho_fb.TRNA+rho_fb.TRDOP+rho_fb.RGEM+rho_fb.RBMF+rho_fb.RG+rho_fb.RC
     return rho_fb.TFR*1.E5
 
 global powpk
@@ -411,7 +418,7 @@ def powpk():
     AUXCI2 = tuple(i for i in AUXCI2)
 
     if (time==0): # SS calculation
-        powpk.Q2SS = 0.923344
+        powpk.Q2SS = 0.936418
 
         powpk.Q2d = powpk.Q2SS
         powpk.Q2  = powpk.Q2SS
@@ -477,6 +484,7 @@ post.Calculate(rho_fb)
 post.Calculate(powpk)
 post.Calculate(lambda: powpk.RTOT*1.E5)
 post.Calculate(lambda: powpk.Q2)
+post.Calculate(lambda: rho_fb.TRFL)
 
 post.Calculate(fun3,"MassDTRC")
 post.Calculate(fun3,"MassDTRG")
