@@ -151,7 +151,7 @@ solver_settings.conv_crit_temp_trans = 1.E-7
 
 from PINET import scheduler
 scheduler.delt = 1.
-scheduler.etime = 900    
+scheduler.etime = 201.    
 
 global rho_fb
 def rho_fb():
@@ -485,6 +485,13 @@ post.Calculate(powpk)
 post.Calculate(lambda: powpk.RTOT*1.E5)
 post.Calculate(lambda: powpk.Q2)
 post.Calculate(lambda: rho_fb.TRFL)
+post.Calculate(lambda: rho_fb.TRDOP)
+post.Calculate(lambda: rho_fb.RBMF)
+post.Calculate(lambda: rho_fb.TRCL)
+post.Calculate(lambda: rho_fb.TRNA)
+post.Calculate(lambda: rho_fb.RGEM)
+post.Calculate(lambda: rho_fb.RG)
+post.Calculate(lambda: rho_fb.RC)
 
 post.Calculate(fun3,"MassDTRC")
 post.Calculate(fun3,"MassDTRG")

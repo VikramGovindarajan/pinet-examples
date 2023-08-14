@@ -5,7 +5,7 @@ class solid(solidframe):
         self.opt = opt
         if opt == 'ther' or opt == 'all':
             self._rhomass = 10600.
-            self._cpmass = 406.
+            self._cpmass = 430.*0.5
             self._conductivity = 3.
         if opt == 'mech' or opt == 'all':
             pass
