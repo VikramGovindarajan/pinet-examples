@@ -53,16 +53,7 @@ circuit1.add_pipe("pipe1", 3.157, 0.2, "node0", "node1", 0.001, 1, 1,  cfarea=7.
 circuit1.add_pipe("pipe2", 3.518, 0.2, "node2", "node3", 0.001, 1, 1,  cfarea=9.72)
 
 EF =[0.2,0.75,1.05,2.05,2.35,2.9,3.1] #elevation of nodes in fuel channel
-
-#_____________________________________________________________________________________________
-#CHANNEL 1 (inner core) (IC)
-
-#nodes (data= table 3)
-i = 0
-for j in range(7):
-    a=str(i+1)+str(j+1)
-    circuit1.add_node("node"+a,elevation=EF[j])
-
+EB =[1.,1.15,2.75,2.9,3.1] #elevation of nodes in blanket channels
 #parameters for the pipes
 
 #Inlet section
@@ -81,15 +72,69 @@ D1_UT  = 0.1651
 A1_OT = 38.48E-4
 D1_OT  = 0.07
 
+
+DF = [D1_In,D1_pin,D1_pin,D1_pin,D1_pin,D1_pin,D1_UT,D1_OT]
+LF = [H_inlet,H_gap,H_fer,H_fis,H_fer,H_gap,H_trans,H_outlet]
+NINCF = [2,5,3,10,3,5,2,12]
+FAF = [A1_In,A1_pin,A1_pin,A1_pin,A1_pin,A1_pin,A1_UT,A1_OT]
+PF = [SA_IC,SA_OC,225]
+PDC = [156,260,72500]
+
+#Inlet section
+A3_In = 236.1E-4
+D3_In  = 0.1651
+
+#Pin bundle
+A3_pin = 55.25E-4
+D3_pin  = 0.004317
+
+#Upper transition region
+A3_UT = 236.1E-4
+D3_UT  = 0.1651
+
+#Outlet region
+A3_OT = 0.003848
+D3_OT  = 0.07
+
 #Pipe 
-circuit1.add_pipe("pipe11", D1_In,  H_inlet, "node1",  "node11", 0.001, 1, 2,  cfarea=A1_In,  npar=SA_IC,Kforward=156)
-circuit1.add_pipe("pipe12", D1_pin, H_gap,   "node11", "node12", 0.001, 1, 5,  cfarea=A1_pin, npar=SA_IC)
-circuit1.add_pipe("pipe13", D1_pin, H_fer,   "node12", "node13", 0.001, 1, 3,  cfarea=A1_pin, npar=SA_IC)
-circuit1.add_pipe("pipe14", D1_pin, H_fis,   "node13", "node14", 0.001, 1, 10, cfarea=A1_pin, npar=SA_IC)
-circuit1.add_pipe("pipe15", D1_pin, H_fer,   "node14", "node15", 0.001, 1, 3,  cfarea=A1_pin, npar=SA_IC)
-circuit1.add_pipe("pipe16", D1_pin, H_gap,   "node15", "node16", 0.001, 1, 5,  cfarea=A1_pin, npar=SA_IC)
-circuit1.add_pipe("pipe17", D1_UT,  H_trans, "node16", "node17", 0.001, 1, 2,  cfarea=A1_UT,  npar=SA_IC)
-circuit1.add_pipe("pipe18", D1_OT,  H_outlet,"node17", "node2",  0.001, 1, 12, cfarea=A1_OT,  npar=SA_IC)
+
+DB = [D3_In,D3_pin,D3_pin,D3_pin,D3_UT,D3_OT]
+LB = [1,0.15,1.6,0.15,H_trans,H_outlet]
+NINCB = [10,2,16,2,2,5]
+FAB = [A3_In,A3_pin,A3_pin,A3_pin,A3_UT,A3_OT]
+
+
+for i in range(2): #fuel channels
+    #nodes (data= table 3)
+    for j in range(7):
+        a=str(i+1)+str(j+1)
+        circuit1.add_node("node"+a,elevation=EF[j])
+
+    #Pipes
+    for k in range(8):
+        b=str(i+1)+str(k+1)
+        c=str(i+1)+str(k)
+        if k==0:    circuit1.add_pipe("pipe"+b,DF[k],LF[k],"node1", "node"+b,0.001,1,NINCF[k],cfarea=FAF[k],npar=PF[i],Kforward=PDC[i])
+        elif k==1:  circuit1.add_pipe("pipe"+b,DF[k],LF[k],"node"+c,"node"+b,0.001,1,NINCF[k],cfarea=FAF[k],npar=PF[i])
+        elif 1<k<7: circuit1.add_pipe("pipe"+b,DF[k],LF[k],"node"+c,"node"+b,0.001,1,NINCF[k],cfarea=FAF[k],npar=PF[i])
+        else:       circuit1.add_pipe("pipe"+b,DF[k],LF[k],"node"+c,"node2", 0.001,1,NINCF[k],cfarea=FAF[k],npar=PF[i])
+
+for i in range(2,3): #blanket channels
+    for j in range(5):
+        a=str(i+1)+str(j+1)
+        circuit1.add_node("node"+a,elevation=EB[j])
+
+    for k in range(6):
+        b=str(i+1)+str(k+1)
+        c=str(i+1)+str(k)
+        if k==0:    circuit1.add_pipe("pipe"+b,DB[k],LB[k],"node1", "node"+b,0.001,1,NINCB[k],cfarea=FAF[k],npar=PF[i],Kforward=PDC[i])
+        elif k==1:  circuit1.add_pipe("pipe"+b,DB[k],LB[k],"node"+c,"node"+b,0.001,1,NINCB[k],cfarea=FAF[k],npar=PF[i])
+        elif 1<k<5: circuit1.add_pipe("pipe"+b,DB[k],LB[k],"node"+c,"node"+b,0.001,1,NINCB[k],cfarea=FAF[k],npar=PF[i])
+        else:       circuit1.add_pipe("pipe"+b,DB[k],LB[k],"node"+c,"node2", 0.001,1,NINCB[k],cfarea=FAF[k],npar=PF[i])
+
+
+#_____________________________________________________________________________________________
+#CHANNEL 1 (inner core) (IC)
 
 #Snodes
 HTcomp.SNode("snode12")
@@ -140,12 +185,6 @@ layer143 = hslab14.add_layer(thk_elem=2.570E-3,thk_cros=H_fer,nnodes=3,darea=P1_
 
 #CHANNEL 2 (outer core) (OC)
 
-#nodes (data= table 3)
-i = 1
-for j in range(7):
-    a=str(i+1)+str(j+1)
-    circuit1.add_node("node"+a,elevation=EF[j])
-
 #parameters for the pipes
 
 #Inlet section
@@ -164,15 +203,7 @@ D2_UT  = 0.1651
 A2_OT = 0.003848
 D2_OT  = 0.07
 
-#Pipe 
-circuit1.add_pipe("pipe21",D2_In, H_inlet, "node1", "node21",0.001,1,2, cfarea=A2_In, npar=SA_OC,Kforward=260.)
-circuit1.add_pipe("pipe22",D2_pin,H_gap,   "node21","node22",0.001,1,5, cfarea=A2_pin,npar=SA_OC)
-circuit1.add_pipe("pipe23",D2_pin,H_fer,   "node22","node23",0.001,1,3, cfarea=A2_pin,npar=SA_OC)
-circuit1.add_pipe("pipe24",D2_pin,H_fis,   "node23","node24",0.001,1,10,cfarea=A2_pin,npar=SA_OC)
-circuit1.add_pipe("pipe25",D2_pin,H_fer,   "node24","node25",0.001,1,3, cfarea=A2_pin,npar=SA_OC)
-circuit1.add_pipe("pipe26",D2_pin,H_gap,   "node25","node26",0.001,1,5, cfarea=A2_pin,npar=SA_OC)
-circuit1.add_pipe("pipe27",D2_UT, H_trans, "node26","node27",0.001,1,2, cfarea=A2_UT, npar=SA_OC)
-circuit1.add_pipe("pipe28",D2_OT, H_outlet,"node27","node2", 0.001,1,12,cfarea=A2_OT, npar=SA_OC)
+
 #Snodes
 HTcomp.SNode("snode22")
 HTcomp.SNode("snode23")
@@ -222,38 +253,6 @@ layer243 = hslab24.add_layer(thk_elem=2.570E-3,thk_cros=H_fer,nnodes=3,darea=P2_
 #_____________________________________________________________________________________________
 #CHANNEL 3 (Radial Blanket) (RB)
 
-#nodes (data= table 3)
-circuit1.add_node("node31", elevation= 1.)
-circuit1.add_node("node32", elevation= 1.15)
-circuit1.add_node("node33", elevation= 2.75)
-circuit1.add_node("node34", elevation= 2.9)
-circuit1.add_node("node35", elevation= 3.1)
-
-#parameters for the pipes
-
-#Inlet section
-A3_In = 236.1E-4
-D3_In  = 0.1651
-
-#Pin bundle
-A3_pin = 55.25E-4
-D3_pin  = 0.004317
-
-#Upper transition region
-A3_UT = 236.1E-4
-D3_UT  = 0.1651
-
-#Outlet region
-A3_OT = 0.003848
-D3_OT  = 0.07
-
-#Pipe 
-circuit1.add_pipe("pipe31",D3_In, 1,       "node1", "node31",0.001,1,10,cfarea=A3_In, npar=225,Kforward=72500.)
-circuit1.add_pipe("pipe32",D3_pin,0.15,    "node31","node32",0.001,1,2, cfarea=A3_pin,npar=225)
-circuit1.add_pipe("pipe33",D3_pin,1.6,     "node32","node33",0.001,1,16,cfarea=A3_pin,npar=225)
-circuit1.add_pipe("pipe34",D3_pin,0.15,    "node33","node34",0.001,1,2, cfarea=A3_pin,npar=225)
-circuit1.add_pipe("pipe35",D3_UT, H_trans, "node34","node35",0.001,1,2, cfarea=A3_UT, npar=225)
-circuit1.add_pipe("pipe36",D3_OT, H_outlet,"node35","node2", 0.001,1,5, cfarea=A3_OT, npar=225)
 
 #Snodes
 HTcomp.SNode("snode32")

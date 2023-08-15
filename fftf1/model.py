@@ -31,6 +31,8 @@ E=[0.0000,0.9144,0.9347,1.0795,2.1719]#elevation  of nodes in channel
 PDC=[9.7689,10.23113,9.77031,9.94184,11.84798,25.21945]#pressure drop coefficient
 UN3FA=0.0052128
 UN3D=0.07648207121336499
+DF = [D,D,D,D,D,UN3D]
+NINCF = [1,10,1,1,1,1]
 PF=[1,6,9,16,18,30]#no. of parallel flows in a channel
 L=[0.0203,0.9144,0.0203,0.1448,1.0924,0.28]#length of pipe
 FALAB=[0.0808,0.4851,0.7276,1.2936,1.4553,2.4254]
@@ -59,28 +61,22 @@ AFF=[[0.077776,0.093363,0.108730,0.118943,0.123089,0.120939,0.112795,0.099371,0.
      [0.088890,0.101690,0.115791,0.124753,0.126694,0.120845,0.106322,0.088871,0.071330,0.054815]]
 global p
 p=[]
-i=0
-while i<=5:
+
+for i in range(6):
     for j in range(5):
         a=str(i+1)+str(j+1)
         circuit1.add_node("node"+a,elevation=E[j])
 
-    k=0    
-    while k<=5:
+    for k in range(6):
         b=str(i+1)+str(k+1)
         c=str(i+1)+str(k)
-        if k==0:
-            circuit1.add_pipe("pipe"+b,D,L[k],"node1","node"+b,0.03,1,1,cfarea=FA,npar=PF[i],Kforward=PDC[i])
-        elif k==1:
-            circuit1.add_pipe("pipe"+b,D,L[k],"node"+c,"node"+b,0.03,1,10,cfarea=FA,npar=PF[i])
-        elif 1<k<5:
-            circuit1.add_pipe("pipe"+b,D,L[k],"node"+c,"node"+b,0.03,1,1,cfarea=FA,npar=PF[i])
-        else:
-            circuit1.add_pipe("pipe"+b,UN3D,L[k],"node"+c,"node7",0.03,1,1,cfarea=UN3FA,npar=PF[i])
+        if k==0:    circuit1.add_pipe("pipe"+b,DF[k],L[k],"node1", "node"+b,0.03,1,NINCF[k],cfarea=FA,   npar=PF[i],Kforward=PDC[i])
+        elif k==1:  circuit1.add_pipe("pipe"+b,DF[k],L[k],"node"+c,"node"+b,0.03,1,NINCF[k],cfarea=FA,   npar=PF[i])
+        elif 1<k<5: circuit1.add_pipe("pipe"+b,DF[k],L[k],"node"+c,"node"+b,0.03,1,NINCF[k],cfarea=FA,   npar=PF[i])
+        else:       circuit1.add_pipe("pipe"+b,DF[k],L[k],"node"+c,"node7", 0.03,1,NINCF[k],cfarea=UN3FA,npar=PF[i])
         HTcomp.SNode("snode"+b)
-        k+=1
-    l=0
-    while l<=5:
+
+    for l in range(6):
         d=str(i+1)+str(l+1)
         if l==0:
             p.append(d+str(3))
@@ -109,8 +105,7 @@ while i<=5:
         else:
             g=HTcomp.HSlab("hslab"+d,"pipe"+d,"pipe",[fun2],"snode"+d,"hflux",0.0,FAUN3[i],nlayers=1)
             g.add_layer(0.027,0.28,2,FAUN3[i],'SS23','User')
-        l+=1
-    i+=1
+
 global pipe7
 pipe7=circuit1.add_pipe("pipe7",0.003238,2.4722,"node1","node7",0.03,1,1,cfarea=0.12982,Kforward=147.6114,heat_input=7113740.)
 
@@ -123,18 +118,15 @@ series1=csv_reader("decay.csv")
 def power_trans(time,delt):
     if time == 0:
         powpk.PO = 0.986
-    m=0
-    while m<=5:
-        n=0
-        while n<=2:
+    for m in range(6):
+        for n in range(3):
             if n==0:
                 p[m*3+n].heat_input = powpk.PO*HILAB[m]
             elif n==1:
                 p[m*3+n].heat_input = powpk.PO*HIAC[m]
             else:
                 p[m*3+n].heat_input = powpk.PO*HIUAB[m]
-            n+=1
-        m+=1
+
     pipe7.heat_input = powpk.PO * 7113740.
 action_setup.Action(None,None,power_trans)
 global series2
