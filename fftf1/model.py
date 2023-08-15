@@ -110,6 +110,8 @@ HTcomp.LumpedMass("MassDTRG",4.7572736,"node1")
 HTcomp.LumpedMass("MassDTRV",27.314107,"node1")
 HTcomp.LumpedMass("MassDTRC",22.0,"node7")
 
+#_____________________________________________________________________________________________________________________________
+
 global series1
 series1=csv_reader("decay.csv")
 def power_trans(time,delt):

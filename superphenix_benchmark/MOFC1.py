@@ -9,6 +9,26 @@ circuit1.add_node("node1", elevation= 0.0)
 circuit1.add_node("node2", elevation= 4.3)
 circuit1.add_node("node3", elevation= 4.5)
 
+circuit1.add_pipe("pipe1", 3.157, 0.2, "node0", "node1", 0.001, 1, 1,  cfarea=7.83)
+circuit1.add_pipe("pipe2", 3.518, 0.2, "node2", "node3", 0.001, 1, 1,  cfarea=9.72)
+
+#nominal power inputs
+global total_power_frac
+global Pow_IC
+global Pow_OC
+global Pow_RB
+total_power_frac=0.2314
+Total_power=29.8988E8*total_power_frac
+Pow_IC = 0.5854*Total_power
+Pow_OC = 0.4039*Total_power
+Pow_RB = 0.0107*Total_power
+
+def fun1(flow_elem,WallTemp):
+    Pe = flow_elem.ther_gues.rhomass()*flow_elem.velocity*flow_elem.diameter*flow_elem.ther_gues.cpmass()/flow_elem.ther_gues.conductivity()
+    Nu = 5.0 + 0.025*Pe**0.8
+    h = Nu * flow_elem.ther_gues.conductivity() / flow_elem.diameter
+    return h
+
 #parameters
 SA_IC = 190
 SA_OC = 168
@@ -24,37 +44,11 @@ H_fis = 1
 H_trans = 0.2
 H_outlet = 1.2
 
-
-pi = math.pi
-L = 0.1651/1.732
-
-#nominal power inputs
-
-global total_power_frac
-global Total_power
-global Pow_IC
-global Pow_OC
-global Pow_RB
-total_power_frac=0.2314
-Total_power=29.8988E8*total_power_frac
-Pow_IC = 0.5854*Total_power
-Pow_OC = 0.4039*Total_power
-Pow_RB = 0.0107*Total_power
-
-#preliminary calculations
-
-def fun1(flow_elem,WallTemp):
-    Pe = flow_elem.ther_gues.rhomass()*flow_elem.velocity*flow_elem.diameter*flow_elem.ther_gues.cpmass()/flow_elem.ther_gues.conductivity()
-    Nu = 5.0 + 0.025*Pe**0.8
-    h = Nu * flow_elem.ther_gues.conductivity() / flow_elem.diameter
-    return h
-    
-circuit1.add_pipe("pipe1", 3.157, 0.2, "node0", "node1", 0.001, 1, 1,  cfarea=7.83)
-circuit1.add_pipe("pipe2", 3.518, 0.2, "node2", "node3", 0.001, 1, 1,  cfarea=9.72)
+global p
+p=[]
 
 EF =[0.2,0.75,1.05,2.05,2.35,2.9,3.1] #elevation of nodes in fuel channel
 EB =[1.,1.15,2.75,2.9,3.1] #elevation of nodes in blanket channels
-#parameters for the pipes
 
 #Inlet section
 A1_In = 236.1E-4
@@ -72,12 +66,11 @@ D1_UT  = 0.1651
 A1_OT = 38.48E-4
 D1_OT  = 0.07
 
-
 DF = [D1_In,D1_pin,D1_pin,D1_pin,D1_pin,D1_pin,D1_UT,D1_OT]
 LF = [H_inlet,H_gap,H_fer,H_fis,H_fer,H_gap,H_trans,H_outlet]
 NINCF = [2,5,3,10,3,5,2,12]
 FAF = [A1_In,A1_pin,A1_pin,A1_pin,A1_pin,A1_pin,A1_UT,A1_OT]
-PF = [SA_IC,SA_OC,225]
+PF = [SA_IC,SA_OC,SA_RB]
 PDC = [156,260,72500]
 
 #Inlet section
@@ -96,48 +89,45 @@ D3_UT  = 0.1651
 A3_OT = 0.003848
 D3_OT  = 0.07
 
-#Pipe 
-
 DB = [D3_In,D3_pin,D3_pin,D3_pin,D3_UT,D3_OT]
 LB = [1,0.15,1.6,0.15,H_trans,H_outlet]
 NINCB = [10,2,16,2,2,5]
 FAB = [A3_In,A3_pin,A3_pin,A3_pin,A3_UT,A3_OT]
-global p
-p=[]
+
 #parameters for heatslab
-P1_pin  = pi*8.5E-3*Pins_fis*SA_IC
-P1_clad = pi*7.37E-3*Pins_fis*SA_IC
-P1_He   = pi*7.14E-3*Pins_fis*SA_IC
-P1_pelt = pi*2E-3*Pins_fis*SA_IC
-P2_pin  = pi*8.50E-3*Pins_fis*SA_OC
-P2_clad = pi*7.37E-3*Pins_fis*SA_OC
-P2_He   = pi*7.14E-3*Pins_fis*SA_OC
-P2_pelt = pi*2.00E-3*Pins_fis*SA_OC
+P1_pin  = math.pi*8.5E-3*Pins_fis*SA_IC
+P1_clad = math.pi*7.37E-3*Pins_fis*SA_IC
+P1_He   = math.pi*7.14E-3*Pins_fis*SA_IC
+P1_pelt = math.pi*2E-3*Pins_fis*SA_IC
+P2_pin  = math.pi*8.50E-3*Pins_fis*SA_OC
+P2_clad = math.pi*7.37E-3*Pins_fis*SA_OC
+P2_He   = math.pi*7.14E-3*Pins_fis*SA_OC
+P2_pelt = math.pi*2.00E-3*Pins_fis*SA_OC
 
 GIFALABI = [P1_pelt*H_fer,P2_pelt*H_fer]
 GIFALAB  = [P1_He*H_fer  ,P2_He*H_fer  ]
 FALABI   = [P1_clad*H_fer,P2_clad*H_fer]
 FALAB    = [P1_pin*H_fer ,P2_pin*H_fer ]
-HILAB = [8.938E-3*Pow_IC,0.007422*Pow_OC]
-AFFLAB = [[0.151,0.264,0.585],
+HILAB    = [8.938E-3*Pow_IC,0.007422*Pow_OC]
+AFFLAB   = [[0.151,0.264,0.585],
           [0.141,0.257,0.602]]
 GIFAACI = [P1_pelt*H_fis,P2_pelt*H_fis]
 GIFAAC  = [P1_He*H_fis  ,P2_He*H_fis  ]
 FAACI   = [P1_clad*H_fis,P2_clad*H_fis]
 FAAC    = [P1_pin*H_fis ,P2_pin*H_fis ]
-HIAC = [0.98542*Pow_IC,0.98976*Pow_OC]
-AFF = [[0.0787,0.1,0.118,0.128,0.129,0.122,0.108,0.091,0.072,0.0533],
-       [0.077,0.099,0.117,0.127,0.129,0.122,0.108,0.09,0.073,0.058]]
+HIAC    = [0.98542*Pow_IC,0.98976*Pow_OC]
+AFF     = [[0.0787,0.1,0.118,0.128,0.129,0.122,0.108,0.091,0.072,0.0533],
+           [0.077,0.099,0.117,0.127,0.129,0.122,0.108,0.09,0.073,0.058]]
 GIFAUABI = GIFALABI
-GIFAUAB = GIFALAB
-FAUABI = FALABI
-FAUAB = FALAB
-HIUAB = [5.6213E-3*Pow_IC,0.0048505*Pow_OC]
-AFFUAB =[[0.616,0.257,0.127],
-         [0.628,0.25,0.122]]
-P3_pin  = pi*15.8E-3*Pins_fer*SA_RB
-P3_clad = pi*14.66E-3*Pins_fer*SA_RB
-P3_He   = pi*14.36E-3*Pins_fer*SA_RB
+GIFAUAB  = GIFALAB
+FAUABI   = FALABI
+FAUAB    = FALAB
+HIUAB    = [5.6213E-3*Pow_IC,0.0048505*Pow_OC]
+AFFUAB   = [[0.616,0.257,0.127],
+          [0.628,0.25,0.122]]
+P3_pin   = math.pi*15.8E-3*Pins_fer*SA_RB
+P3_clad  = math.pi*14.66E-3*Pins_fer*SA_RB
+P3_He    = math.pi*14.36E-3*Pins_fer*SA_RB
 
 GIFAACIB = [P3_He*1.6]
 GIFAACB  = [P3_He*1.6]
@@ -206,7 +196,7 @@ for i in range(2,3): #blanket channels
             g.add_layer         (0.30E-3, 1.6, 2, FAACIB[i-2],  'gap13', 'User')
             g.add_layer         (1.14E-3, 1.6, 2, FAACB[i-2],   'SS13',  'User')
 
-#___________________________________________________________________________________________________________________________________________________
+#__________________________________________________________________________________________________________________________________________________
 #Boundary condition MOFC1
 
 circuit1.add_BC("bc1","node3",'P',1.5E5)
