@@ -135,6 +135,16 @@ FAUAB = FALAB
 HIUAB = [5.6213E-3*Pow_IC,0.0048505*Pow_OC]
 AFFUAB =[[0.616,0.257,0.127],
          [0.628,0.25,0.122]]
+P3_pin  = pi*15.8E-3*Pins_fer*SA_RB
+P3_clad = pi*14.66E-3*Pins_fer*SA_RB
+P3_He   = pi*14.36E-3*Pins_fer*SA_RB
+
+GIFAACIB = [P3_He*1.6]
+GIFAACB  = [P3_He*1.6]
+FAACIB   = [P3_clad*1.6]
+FAACB    = [P3_pin*1.6]
+HIACB    = [Pow_RB]
+AFFB     = [[0.01337,0.02021,0.0357,0.05966,0.08194,0.09845,0.10139,0.1122,0.1092,0.1005,0.08691,0.06946,0.04898,0.02862,0.01583,0.01038]]
 
 for i in range(2): #fuel channels
     #nodes (data= table 3)
@@ -151,8 +161,7 @@ for i in range(2): #fuel channels
         elif 1<k<7: circuit1.add_pipe("pipe"+b,DF[k],LF[k],"node"+c,"node"+b,0.001,1,NINCF[k],cfarea=FAF[k],npar=PF[i])
         else:       circuit1.add_pipe("pipe"+b,DF[k],LF[k],"node"+c,"node2", 0.001,1,NINCF[k],cfarea=FAF[k],npar=PF[i])
 
-    #Snodes
-    for k in range(2,7): #pending why
+    for k in range(2,5):
         d=str(i+1)+str(k+1)
         HTcomp.SNode("snode"+d)
         
@@ -187,37 +196,15 @@ for i in range(2,3): #blanket channels
         elif 1<k<5: circuit1.add_pipe("pipe"+b,DB[k],LB[k],"node"+c,"node"+b,0.001,1,NINCB[k],cfarea=FAF[k],npar=PF[i])
         else:       circuit1.add_pipe("pipe"+b,DB[k],LB[k],"node"+c,"node2", 0.001,1,NINCB[k],cfarea=FAF[k],npar=PF[i])
 
-    for k in range(1,4): #pending why
+    for k in range(2,3):
         d=str(i+1)+str(k+1)
         HTcomp.SNode("snode"+d)
 
-#_____________________________________________________________________________________________
-#CHANNEL 3 (Radial Blanket) (RB)
-
-
-#parameters for heatslab
-
-P3_pin  = pi*15.8E-3*Pins_fer*SA_RB
-P3_clad = pi*14.66E-3*Pins_fer*SA_RB
-P3_He   = pi*14.36E-3*Pins_fer*SA_RB
-
-#(Nu relation yet to be defined and some doubt in lower axial blanket)
-
-global layer323
-
-##Lower gap
-#hslab31=HTcomp.HSlab("hslab31","pipe32","pipe",[fun1],"snode32","hflux",0.0,P3_pin*0.15,nlayers=1)
-#hslab31.add_layer(thk_elem=1.14E-3,thk_cros=0.15,nnodes=2,darea=P3_clad*0.15,solname='SS13',sollib="User")
-
-#fertile region
-hslab32=HTcomp.HSlab("hslab32","pipe33","pipe",[fun1],"snode33","hflux",0.0,P3_pin*1.6,nlayers=3)
-hslab32.add_layer(thk_elem=1.14E-3,thk_cros=1.6,nnodes=2,darea=P3_clad*1.6,solname='SS13', sollib="User")
-hslab32.add_layer(thk_elem=0.30E-3,thk_cros=1.6,nnodes=2,darea=P3_He*1.6,  solname='gap13',sollib="User")
-layer323 = hslab32.add_layer(thk_elem=7.18E-3,thk_cros=1.6,nnodes=6,darea=P3_He*1.6,  solname='MOX13',sollib="User",heat_input= Pow_RB,AFF=[0.01337,0.02021,0.0357,0.05966,0.08194,0.09845,0.10139,0.1122,0.1092,0.1005,0.08691,0.06946,0.04898,0.02862,0.01583,0.01038])
-
-##Upper gap
-#hslab33=HTcomp.HSlab("hslab33","pipe34","pipe",[fun1],"snode34","hflux",0.0,P3_pin*0.15,nlayers=1)
-#hslab33.add_layer(thk_elem=1.14E-3,thk_cros=0.15,nnodes=2,darea=P3_clad*0.15,solname='SS13',sollib="User")
+        if k==2: #fertile region
+            g=HTcomp.HSlab("hslab"+d,"snode"+d,"hflux",0.0,"pipe"+d,"pipe",[fun1],GIFAACIB[i-2],nlayers=3)
+            p.append(g.add_layer(7.18E-3, 1.6, 2, GIFAACB[i-2], 'MOX13', 'User',heat_input=HIACB[i-2],AFF=AFFB[i-2]))
+            g.add_layer         (0.30E-3, 1.6, 2, FAACIB[i-2],  'gap13', 'User')
+            g.add_layer         (1.14E-3, 1.6, 2, FAACB[i-2],   'SS13',  'User')
 
 #___________________________________________________________________________________________________________________________________________________
 #Boundary condition MOFC1
@@ -248,7 +235,7 @@ def fun3(time,delt):
     p[3].heat_input = 0.007422*Pow_OC
     p[4].heat_input = 0.98976*Pow_OC
     p[5].heat_input = 0.0048505*Pow_OC
-    layer323.heat_input = Pow_RB
+    p[6].heat_input = Pow_RB
     
 from PINET import solver_settings
 solver_settings.conv_crit_ht = 1.E-7
