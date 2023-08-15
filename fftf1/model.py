@@ -74,32 +74,29 @@ for i in range(6):
         elif k==1:  circuit1.add_pipe("pipe"+b,DF[k],L[k],"node"+c,"node"+b,0.03,1,NINCF[k],cfarea=FA,   npar=PF[i])
         elif 1<k<5: circuit1.add_pipe("pipe"+b,DF[k],L[k],"node"+c,"node"+b,0.03,1,NINCF[k],cfarea=FA,   npar=PF[i])
         else:       circuit1.add_pipe("pipe"+b,DF[k],L[k],"node"+c,"node7", 0.03,1,NINCF[k],cfarea=UN3FA,npar=PF[i])
-        HTcomp.SNode("snode"+b)
 
-    for l in range(6):
-        d=str(i+1)+str(l+1)
-        if l==0:
-            p.append(d+str(3))
+    for k in range(6):
+        d=str(i+1)+str(k+1)
+        HTcomp.SNode("snode"+d)
+        if k==0:
             g=HTcomp.HSlab("hslab"+d,"snode"+d,"hflux",0.0,"pipe"+d,"pipe",[fun1],GIFALAB[i],nlayers=3)
-            p[i*3+l]=g.add_layer(0.0024,0.0203,2,GIFALAB[i],'MOX23','User',heat_input=HILAB[i])
+            p.append(g.add_layer(0.0024,0.0203,2,GIFALAB[i],'MOX23','User',heat_input=HILAB[i]))
             g.add_layer(1.4E-4,0.0203,2,FALABI[i],'gap24','User')
             g.add_layer(3.81E-4,0.0203,2,FALAB[i],'SS23','User')
-        elif l==1:
-            p.append(d+str(3))
+        elif k==1:
             g=HTcomp.HSlab("hslab"+d,"snode"+d,"hflux",0.0,"pipe"+d,"pipe",[fun1],GIFAAC[i],nlayers=3)
-            p[i*3+l]=g.add_layer(0.00247,0.9144,2,GIFAAC[i],'MOX23','User',10,heat_input=HIAC[i],AFF=AFF[i])
+            p.append(g.add_layer(0.00247,0.9144,2,GIFAAC[i],'MOX23','User',10,heat_input=HIAC[i],AFF=AFF[i]))
             g.add_layer(7.E-5,0.9144,2,FAACI[i],'gap23','User')
             g.add_layer(3.81E-4,0.9144,2,FAAC[i],'SS23','User')
-        elif l==2:
-            p.append(d+str(3))
+        elif k==2:
             g=HTcomp.HSlab("hslab"+d,"snode"+d,"hflux",0.0,"pipe"+d,"pipe",[fun1],GIFAUAB[i],nlayers=3)
-            p[i*3+l]=g.add_layer(0.0024,0.0203,2,GIFAUAB[i],'MOX23','User',heat_input=HIUAB[i])
+            p.append(g.add_layer(0.0024,0.0203,2,GIFAUAB[i],'MOX23','User',heat_input=HIUAB[i]))
             g.add_layer(1.4E-4,0.0203,2,FAUABI[i],'gap24','User')
             g.add_layer(3.81E-4,0.0203,2,FAUAB[i],'SS23','User')
-        elif l==3:
+        elif k==3:
             g=HTcomp.HSlab("hslab"+d,"pipe"+d,"pipe",[fun1],"snode"+d,"hflux",0.0,FAUN1[i],nlayers=1)
             g.add_layer(0.0018497,0.1448,2,FAUN1[i],'SS23','User')
-        elif l==4:
+        elif k==4:
             g=HTcomp.HSlab("hslab"+d,"pipe"+d,"pipe",[fun1],"snode"+d,"hflux",0.0,FAUN2[i],nlayers=1)
             g.add_layer(8.625E-4,1.0924,2,FAUN2[i],'SS23','User')
         else:

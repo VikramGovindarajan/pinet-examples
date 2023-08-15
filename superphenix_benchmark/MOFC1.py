@@ -43,7 +43,7 @@ Pow_RB = 0.0107*Total_power
 
 #preliminary calculations
 
-def fun(flow_elem,WallTemp):
+def fun1(flow_elem,WallTemp):
     Pe = flow_elem.ther_gues.rhomass()*flow_elem.velocity*flow_elem.diameter*flow_elem.ther_gues.cpmass()/flow_elem.ther_gues.conductivity()
     Nu = 5.0 + 0.025*Pe**0.8
     h = Nu * flow_elem.ther_gues.conductivity() / flow_elem.diameter
@@ -102,7 +102,39 @@ DB = [D3_In,D3_pin,D3_pin,D3_pin,D3_UT,D3_OT]
 LB = [1,0.15,1.6,0.15,H_trans,H_outlet]
 NINCB = [10,2,16,2,2,5]
 FAB = [A3_In,A3_pin,A3_pin,A3_pin,A3_UT,A3_OT]
+global p
+p=[]
+#parameters for heatslab
+P1_pin  = pi*8.5E-3*Pins_fis*SA_IC
+P1_clad = pi*7.37E-3*Pins_fis*SA_IC
+P1_He   = pi*7.14E-3*Pins_fis*SA_IC
+P1_pelt = pi*2E-3*Pins_fis*SA_IC
+P2_pin  = pi*8.50E-3*Pins_fis*SA_OC
+P2_clad = pi*7.37E-3*Pins_fis*SA_OC
+P2_He   = pi*7.14E-3*Pins_fis*SA_OC
+P2_pelt = pi*2.00E-3*Pins_fis*SA_OC
 
+GIFALABI = [P1_pelt*H_fer,P2_pelt*H_fer]
+GIFALAB  = [P1_He*H_fer  ,P2_He*H_fer  ]
+FALABI   = [P1_clad*H_fer,P2_clad*H_fer]
+FALAB    = [P1_pin*H_fer ,P2_pin*H_fer ]
+HILAB = [8.938E-3*Pow_IC,0.007422*Pow_OC]
+AFFLAB = [[0.151,0.264,0.585],
+          [0.141,0.257,0.602]]
+GIFAACI = [P1_pelt*H_fis,P2_pelt*H_fis]
+GIFAAC  = [P1_He*H_fis  ,P2_He*H_fis  ]
+FAACI   = [P1_clad*H_fis,P2_clad*H_fis]
+FAAC    = [P1_pin*H_fis ,P2_pin*H_fis ]
+HIAC = [0.98542*Pow_IC,0.98976*Pow_OC]
+AFF = [[0.0787,0.1,0.118,0.128,0.129,0.122,0.108,0.091,0.072,0.0533],
+       [0.077,0.099,0.117,0.127,0.129,0.122,0.108,0.09,0.073,0.058]]
+GIFAUABI = GIFALABI
+GIFAUAB = GIFALAB
+FAUABI = FALABI
+FAUAB = FALAB
+HIUAB = [5.6213E-3*Pow_IC,0.0048505*Pow_OC]
+AFFUAB =[[0.616,0.257,0.127],
+         [0.628,0.25,0.122]]
 
 for i in range(2): #fuel channels
     #nodes (data= table 3)
@@ -119,6 +151,29 @@ for i in range(2): #fuel channels
         elif 1<k<7: circuit1.add_pipe("pipe"+b,DF[k],LF[k],"node"+c,"node"+b,0.001,1,NINCF[k],cfarea=FAF[k],npar=PF[i])
         else:       circuit1.add_pipe("pipe"+b,DF[k],LF[k],"node"+c,"node2", 0.001,1,NINCF[k],cfarea=FAF[k],npar=PF[i])
 
+    #Snodes
+    for k in range(2,7): #pending why
+        d=str(i+1)+str(k+1)
+        HTcomp.SNode("snode"+d)
+        
+        if k==2: #Lower fertile region
+            g=HTcomp.HSlab("hslab"+d,"snode"+d,"hflux",0.0,"pipe"+d,"pipe",[fun1],GIFALABI[i],nlayers=3)
+            p.append(g.add_layer(2.570E-3, H_fer, 2,GIFALAB[i],'MOX13','User',heat_input= HILAB[i],AFF=AFFLAB[i]))
+            g.add_layer         (0.115E-3, H_fer, 2,FALABI[i], 'gap13','User')
+            g.add_layer         (0.565E-3, H_fer, 2,FALAB[i],  'SS13', 'User')
+
+        elif k==3: #fissile region
+            g=HTcomp.HSlab("hslab"+d,"snode"+d,"hflux",0.0,"pipe"+d,"pipe",[fun1],GIFAACI[i],nlayers=3)
+            p.append(g.add_layer(2.570E-3, H_fis, 2, GIFAAC[i], 'MOX13', 'User',heat_input=HIAC[i],AFF=AFF[i]))
+            g.add_layer         (0.115E-3, H_fis, 2, FAACI[i],  'gap13', 'User')
+            g.add_layer         (0.565E-3, H_fis, 2, FAAC[i],   'SS13',  'User')
+
+        elif k==4: #Upper fertile region
+            g=HTcomp.HSlab("hslab"+d,"snode"+d,"hflux",0.0,"pipe"+d,"pipe",[fun1],GIFAUABI[i],nlayers=3)
+            p.append(g.add_layer(2.570E-3, H_fer, 2, GIFAUAB[i],'MOX13','User',heat_input=HIUAB[i],AFF=AFFUAB[i]))
+            g.add_layer         (0.115E-3, H_fer, 2, FAUABI[i], 'gap13','User')
+            g.add_layer         (0.565E-3, H_fer, 2, FAUAB[i],  'SS13', 'User')
+
 for i in range(2,3): #blanket channels
     for j in range(5):
         a=str(i+1)+str(j+1)
@@ -132,132 +187,12 @@ for i in range(2,3): #blanket channels
         elif 1<k<5: circuit1.add_pipe("pipe"+b,DB[k],LB[k],"node"+c,"node"+b,0.001,1,NINCB[k],cfarea=FAF[k],npar=PF[i])
         else:       circuit1.add_pipe("pipe"+b,DB[k],LB[k],"node"+c,"node2", 0.001,1,NINCB[k],cfarea=FAF[k],npar=PF[i])
 
-
-#_____________________________________________________________________________________________
-#CHANNEL 1 (inner core) (IC)
-
-#Snodes
-HTcomp.SNode("snode12")
-HTcomp.SNode("snode13")
-HTcomp.SNode("snode14")
-HTcomp.SNode("snode15")
-HTcomp.SNode("snode16")
-
-#parameters for heatslab
-
-
-P1_pin  = pi*8.5E-3*Pins_fis*SA_IC
-P1_clad = pi*7.37E-3*Pins_fis*SA_IC
-P1_He   = pi*7.14E-3*Pins_fis*SA_IC
-P1_pelt = pi*2E-3*Pins_fis*SA_IC
-
-
-##Lower gap()
-#hslab11=HTcomp.HSlab("hslab11","pipe12","pipe",[fun],"snode12","hflux",0.0,P1_pin*H_gap,nlayers=1)
-#hslab11.add_layer(thk_elem=0.565E-3,thk_cros=H_gap,nnodes=2,darea=P1_clad*H_gap,solname='SS13',sollib="User")
-
-global layer123
-global layer133
-global layer143
-#Lower fertile region
-hslab12=HTcomp.HSlab("hslab12","pipe13","pipe",[fun],"snode13","hflux",0.0,P1_pin*H_fer,nlayers=3)
-hslab12.add_layer(thk_elem=0.565E-3,thk_cros=H_fer,nnodes=2,darea=P1_clad*H_fer,solname='SS13',  sollib="User")
-hslab12.add_layer(thk_elem=0.115E-3,thk_cros=H_fer,nnodes=2,darea=P1_He*H_fer,  solname='gap13', sollib="User")
-layer123 = hslab12.add_layer(thk_elem=2.570E-3,thk_cros=H_fer,nnodes=3,darea=P1_pelt*H_fer,solname='MOX13', sollib="User",heat_input= 8.938E-3*Pow_IC,AFF=[0.151,0.264,0.585])
-
-#fissile region
-hslab13=HTcomp.HSlab("hslab13","pipe14","pipe",[fun],"snode14","hflux",0.0,P1_pin*H_fis,nlayers=3)
-hslab13.add_layer(thk_elem=0.565E-3,thk_cros=H_fis,nnodes=2,darea=P1_clad*H_fis,solname='SS13', sollib="User")
-hslab13.add_layer(thk_elem=0.115E-3,thk_cros=H_fis,nnodes=2,darea=P1_He*H_fis,  solname='gap13',sollib="User")
-layer133 = hslab13.add_layer(thk_elem=2.570E-3,thk_cros=H_fis,nnodes=3,darea=P1_pelt*H_fis,solname='MOX13',sollib="User",heat_input= 0.98542*Pow_IC,AFF=[0.0787,0.1,0.118,0.128,0.129,0.122,0.108,0.091,0.072,0.0533])
-
-#Upper fertile region
-hslab14=HTcomp.HSlab("hslab14","pipe15","pipe",[fun],"snode15","hflux",0.0,P1_pin*H_fer,nlayers=3)
-hslab14.add_layer(thk_elem=0.565E-3,thk_cros=H_fer,nnodes=2,darea=P1_clad*H_fer,solname='SS13',sollib="User")
-hslab14.add_layer(thk_elem=0.115E-3,thk_cros=H_fer,nnodes=2,darea=P1_He*H_fer,  solname='gap13',sollib="User")
-layer143 = hslab14.add_layer(thk_elem=2.570E-3,thk_cros=H_fer,nnodes=3,darea=P1_pelt*H_fer,solname='MOX13',sollib="User",heat_input= 5.6213E-3*Pow_IC,AFF=[0.616,0.257,0.127])
-
-##Upper gap
-#hslab15=HTcomp.HSlab("hslab15","pipe16","pipe",[fun],"snode16","hflux",0.0,P1_pin*H_gap,nlayers=1)
-#hslab15.add_layer(thk_elem=0.565E-3,thk_cros=H_gap,nnodes=2,darea=P1_clad*H_gap,solname='SS13',sollib="User")
-
-#___________________________________________________________________________________________________________________________________________________
-
-#CHANNEL 2 (outer core) (OC)
-
-#parameters for the pipes
-
-#Inlet section
-A2_In = 236.1E-4
-D2_In  = 0.1651
-
-#Pin bundle
-A2_pin = 80.23E-4
-D2_pin  = 0.004084
-
-#Upper transition region
-A2_UT = 236.1E-4
-D2_UT  = 0.1651
-
-#Outlet region
-A2_OT = 0.003848
-D2_OT  = 0.07
-
-
-#Snodes
-HTcomp.SNode("snode22")
-HTcomp.SNode("snode23")
-HTcomp.SNode("snode24")
-HTcomp.SNode("snode25")
-HTcomp.SNode("snode26")
-
-#parameters for heatslab
-
-
-P2_pin  = pi*8.50E-3*Pins_fis*SA_OC
-P2_clad = pi*7.37E-3*Pins_fis*SA_OC
-P2_He   = pi*7.14E-3*Pins_fis*SA_OC
-P2_pelt = pi*2.00E-3*Pins_fis*SA_OC
-
-
-##Lower gap
-#hslab21=HTcomp.HSlab("hslab21","pipe22","pipe",[fun],"snode22","hflux",0.0,P2_pin*H_gap,nlayers=1)
-#hslab21.add_layer(thk_elem=0.565E-3,thk_cros=H_gap,nnodes=2,darea=P2_clad*H_gap,solname='SS13',sollib="User")
-
-global layer223
-global layer233
-global layer243
-#Lower fertile region
-hslab22=HTcomp.HSlab("hslab22","pipe23","pipe",[fun],"snode23","hflux",0.0,P2_pin*H_fer,nlayers=3)
-hslab22.add_layer(thk_elem=0.565E-3,thk_cros=H_fer,nnodes=2,darea=P2_clad*H_fer,solname='SS13', sollib="User")
-hslab22.add_layer(thk_elem=0.115E-3,thk_cros=H_fer,nnodes=2,darea=P2_He*H_fer,  solname='gap13',sollib="User")
-layer223 = hslab22.add_layer(thk_elem=2.570E-3,thk_cros=H_fer,nnodes=3,darea=P2_pelt*H_fer,solname='MOX13',sollib="User",heat_input= 0.007422*Pow_OC,AFF=[0.141,0.257,0.602])
-
-#fissile region
-hslab23=HTcomp.HSlab("hslab23","pipe24","pipe",[fun],"snode24","hflux",0.0,P2_pin*H_fis,nlayers=3)
-hslab23.add_layer(thk_elem=0.565E-3,thk_cros=H_fis,nnodes=2,darea=P2_clad*H_fis,solname='SS13', sollib="User")
-hslab23.add_layer(thk_elem=0.115E-3,thk_cros=H_fis,nnodes=2,darea=P2_He*H_fis,  solname='gap13',sollib="User")
-layer233 = hslab23.add_layer(thk_elem=2.570E-3,thk_cros=H_fis,nnodes=3,darea=P2_pelt*H_fis,solname='MOX13',sollib="User",heat_input= 0.98976*Pow_OC,AFF=[0.077,0.099,0.117,0.127,0.129,0.122,0.108,0.09,0.073,0.058])
-
-
-#Upper fertile region
-hslab24=HTcomp.HSlab("hslab24","pipe25","pipe",[fun],"snode25","hflux",0.0,P2_pin*H_fer,nlayers=3)
-hslab24.add_layer(thk_elem=0.565E-3,thk_cros=H_fer,nnodes=2,darea=P2_clad*H_fer,solname='SS13', sollib="User")
-hslab24.add_layer(thk_elem=0.115E-3,thk_cros=H_fer,nnodes=2,darea=P2_He*H_fer,  solname='gap13',sollib="User")
-layer243 = hslab24.add_layer(thk_elem=2.570E-3,thk_cros=H_fer,nnodes=3,darea=P2_pelt*H_fer,solname='MOX13',sollib="User",heat_input= 0.0048505*Pow_OC,AFF=[0.628,0.25,0.122])
-
-##Upper gap
-#hslab25=HTcomp.HSlab("hslab25","pipe26","pipe",[fun],"snode26","hflux",0.0,P2_pin*H_gap,nlayers=1)
-#hslab25.add_layer(thk_elem=0.565E-3,thk_cros=H_gap,nnodes=2,darea=P2_clad*H_gap,solname='SS13',sollib="User")
+    for k in range(1,4): #pending why
+        d=str(i+1)+str(k+1)
+        HTcomp.SNode("snode"+d)
 
 #_____________________________________________________________________________________________
 #CHANNEL 3 (Radial Blanket) (RB)
-
-
-#Snodes
-HTcomp.SNode("snode32")
-HTcomp.SNode("snode33")
-HTcomp.SNode("snode34")
 
 
 #parameters for heatslab
@@ -271,17 +206,17 @@ P3_He   = pi*14.36E-3*Pins_fer*SA_RB
 global layer323
 
 ##Lower gap
-#hslab31=HTcomp.HSlab("hslab31","pipe32","pipe",[fun],"snode32","hflux",0.0,P3_pin*0.15,nlayers=1)
+#hslab31=HTcomp.HSlab("hslab31","pipe32","pipe",[fun1],"snode32","hflux",0.0,P3_pin*0.15,nlayers=1)
 #hslab31.add_layer(thk_elem=1.14E-3,thk_cros=0.15,nnodes=2,darea=P3_clad*0.15,solname='SS13',sollib="User")
 
 #fertile region
-hslab32=HTcomp.HSlab("hslab32","pipe33","pipe",[fun],"snode33","hflux",0.0,P3_pin*1.6,nlayers=3)
+hslab32=HTcomp.HSlab("hslab32","pipe33","pipe",[fun1],"snode33","hflux",0.0,P3_pin*1.6,nlayers=3)
 hslab32.add_layer(thk_elem=1.14E-3,thk_cros=1.6,nnodes=2,darea=P3_clad*1.6,solname='SS13', sollib="User")
 hslab32.add_layer(thk_elem=0.30E-3,thk_cros=1.6,nnodes=2,darea=P3_He*1.6,  solname='gap13',sollib="User")
 layer323 = hslab32.add_layer(thk_elem=7.18E-3,thk_cros=1.6,nnodes=6,darea=P3_He*1.6,  solname='MOX13',sollib="User",heat_input= Pow_RB,AFF=[0.01337,0.02021,0.0357,0.05966,0.08194,0.09845,0.10139,0.1122,0.1092,0.1005,0.08691,0.06946,0.04898,0.02862,0.01583,0.01038])
 
 ##Upper gap
-#hslab33=HTcomp.HSlab("hslab33","pipe34","pipe",[fun],"snode34","hflux",0.0,P3_pin*0.15,nlayers=1)
+#hslab33=HTcomp.HSlab("hslab33","pipe34","pipe",[fun1],"snode34","hflux",0.0,P3_pin*0.15,nlayers=1)
 #hslab33.add_layer(thk_elem=1.14E-3,thk_cros=0.15,nnodes=2,darea=P3_clad*0.15,solname='SS13',sollib="User")
 
 #___________________________________________________________________________________________________________________________________________________
@@ -307,12 +242,12 @@ def fun3(time,delt):
     Pow_IC = 0.5854*Total_power
     Pow_OC = 0.4039*Total_power
     Pow_RB = 0.0107*Total_power
-    layer123.heat_input = 8.938E-3*Pow_IC
-    layer133.heat_input = 0.98542*Pow_IC
-    layer143.heat_input = 5.6213E-3*Pow_IC
-    layer223.heat_input = 0.007422*Pow_OC
-    layer233.heat_input = 0.98976*Pow_OC
-    layer243.heat_input = 0.0048505*Pow_OC
+    p[0].heat_input = 8.938E-3*Pow_IC
+    p[1].heat_input = 0.98542*Pow_IC
+    p[2].heat_input = 5.6213E-3*Pow_IC
+    p[3].heat_input = 0.007422*Pow_OC
+    p[4].heat_input = 0.98976*Pow_OC
+    p[5].heat_input = 0.0048505*Pow_OC
     layer323.heat_input = Pow_RB
     
 from PINET import solver_settings
