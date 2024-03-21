@@ -38,9 +38,9 @@ X[2] = 1
 
 
 for i in range(100):
-
-    b = np.dot(F,phi)/lambd
-
+    S = np.dot(F,phi)
+    b = S/lambd
+    
     phi1 = scipy.linalg.solve(A,b)
     lambd1 = lambd*np.inner(phi1,X)/np.inner(phi,X)
 
@@ -59,31 +59,31 @@ else:
 print(phi)
 print(lambd)
 
-# phi2d = np.zeros((2,2))
-# phi2d[0,0] = phi[0]
-# phi2d[0,1] = phi[1]
-# phi2d[1,0] = phi[2]
-# phi2d[1,1] = phi[0]
+phi2d = np.zeros((2,2))
+phi2d[0,0] = phi[0]
+phi2d[0,1] = phi[1]
+phi2d[1,0] = phi[2]
+phi2d[1,1] = phi[0]
 
 
-# from matplotlib.colors import BoundaryNorm
-# from matplotlib.ticker import MaxNLocator
+from matplotlib.colors import BoundaryNorm
+from matplotlib.ticker import MaxNLocator
 
-# x = np.linspace(0,5,3)
-# y = np.linspace(0,5,3)
-# x, y = np.meshgrid(x, y)
+x = np.linspace(0,5,3)
+y = np.linspace(0,5,3)
+x, y = np.meshgrid(x, y)
 
-# z = phi2d
+z = phi2d
 
-# levels = MaxNLocator(nbins=10).tick_values(z.min(), z.max())
+levels = MaxNLocator(nbins=10).tick_values(z.min(), z.max())
 
-# cmap = plt.colormaps['coolwarm']
-# norm = BoundaryNorm(levels, ncolors=cmap.N, clip=True)
+cmap = plt.colormaps['coolwarm']
+norm = BoundaryNorm(levels, ncolors=cmap.N, clip=True)
 
-# fig, ax = plt.subplots()
+fig, ax = plt.subplots()
 
-# im = ax.pcolormesh(x, y, z, cmap=cmap, norm=norm)
-# fig.colorbar(im, ax=ax)
-# ax.set_title('flux distribution')
+im = ax.pcolormesh(x, y, z, cmap=cmap, norm=norm)
+fig.colorbar(im, ax=ax)
+ax.set_title('flux distribution')
 
-# plt.show()
+plt.show()
