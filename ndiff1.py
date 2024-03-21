@@ -1,6 +1,8 @@
 import sys
 import numpy as np
 import scipy
+import scipy.linalg
+import matplotlib.pyplot as plt
 
 D = 1E2
 h = 2.5E-2
@@ -53,3 +55,32 @@ else:
 
 print(phi)
 print(lambd)
+
+phi2d = np.zeros((2,2))
+phi2d[0,0] = phi[0]
+phi2d[0,1] = phi[1]
+phi2d[1,0] = phi[2]
+phi2d[1,1] = phi[0]
+
+
+from matplotlib.colors import BoundaryNorm
+from matplotlib.ticker import MaxNLocator
+
+x = np.linspace(0,5,3)
+y = np.linspace(0,5,3)
+x, y = np.meshgrid(x, y)
+
+z = phi2d
+
+levels = MaxNLocator(nbins=10).tick_values(0, z.max())
+
+cmap = plt.colormaps['coolwarm']
+norm = BoundaryNorm(levels, ncolors=cmap.N, clip=True)
+
+fig, ax = plt.subplots()
+
+im = ax.pcolormesh(x, y, z, cmap=cmap, norm=norm)
+fig.colorbar(im, ax=ax)
+ax.set_title('flux distribution')
+
+plt.show()
